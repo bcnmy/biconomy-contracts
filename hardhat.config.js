@@ -29,8 +29,48 @@ const blockvigilKey = fs.readFileSync(".blockvigil").toString().trim();
  */
 module.exports = {
   //expand to required versions
-  solidity: "0.8.4",
-
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.4",
+        settings:{
+          evmVersion: "berlin",
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
+        version: "0.5.2",
+        settings:{
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
+        version: "0.6.9",
+        settings:{
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
+        version: "0.7.6",
+        settings:{
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
+        version: "0.6.12",
+        settings: {
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
+        version: "0.7.0",
+        settings: {
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+    ]
+  },
+  //solidity: "0.8.4",
   networks: {
     hardhat: {
       initialBaseFeePerGas: 0, // workaround from https://github.com/sc-forks/solidity-coverage/issues/652#issuecomment-896330136 . Remove when that issue is closed.
