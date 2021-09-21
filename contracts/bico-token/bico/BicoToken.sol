@@ -441,11 +441,13 @@ contract Governed {
 
 contract BicoToken is ERC20Meta, ERC20Burnable, ERC20Pausable, AccessControl, Governed {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    constructor (address beneficiary,uint256 totalSupply, address trustedForwarder)
-    ERC20Meta ("Biconomy Token", "BICO", totalSupply, trustedForwarder) {
-        _mint(beneficiary, totalSupply);
+    uint256 _totalSupply = 1000000000 * 10 ** decimals();
+    constructor (address beneficiary,address trustedForwarder)
+    ERC20Meta ("Biconomy Token", "BICO",_totalSupply,trustedForwarder) {
+        _mint(beneficiary, _totalSupply);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(PAUSER_ROLE, msg.sender);
+        Governed._initialize(msg.sender);
     }  
 
     event TrustedForwarderChanged(address indexed truestedForwarder, address indexed actor);

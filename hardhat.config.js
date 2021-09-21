@@ -111,6 +111,12 @@ module.exports = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : walletUtils.makeKeyList(),
     },
+    kovan:{
+      //url:`https://kovan.infura.io/v3/${infuraKey}`,
+      url:`https://eth-kovan.alchemyapi.io/v2/${alchemyKey}`,
+      accounts:walletUtils.makeKeyList(),
+      chainId:42,
+    },
     //add more networks here
   },
   gasReporter: {
