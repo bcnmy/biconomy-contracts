@@ -50,11 +50,10 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_, uint256 totalSupply_, address trustedForwarder_) 
+    constructor(string memory name_, string memory symbol_, address trustedForwarder_) 
     public ERC2771Context(trustedForwarder_){
         _name = name_;
         _symbol = symbol_;
-        _totalSupply = totalSupply_;
     }
 
     /**

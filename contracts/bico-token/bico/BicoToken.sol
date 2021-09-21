@@ -443,7 +443,7 @@ contract BicoToken is ERC20Meta, ERC20Burnable, ERC20Pausable, AccessControl, Go
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     uint256 _totalSupply = 1000000000 * 10 ** decimals();
     constructor (address beneficiary,address trustedForwarder)
-    ERC20Meta ("Biconomy Token", "BICO",0,trustedForwarder) {
+    ERC20Meta ("Biconomy Token", "BICO",trustedForwarder) {
         _mint(beneficiary, _totalSupply);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(PAUSER_ROLE, msg.sender);
