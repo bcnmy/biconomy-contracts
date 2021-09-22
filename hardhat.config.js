@@ -19,6 +19,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 const fs = require('fs');
 const infuraKey = fs.readFileSync(".infura").toString().trim();
 const alchemyKey = fs.readFileSync(".alchemy").toString().trim();
+const etherscanKey = fs.readFileSync(".etherscan").toString().trim();
 const blockvigilKey = fs.readFileSync(".blockvigil").toString().trim();
 
 // You need to export an object to set up your config
@@ -124,6 +125,6 @@ module.exports = {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: etherscanKey,
   },
 };

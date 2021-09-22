@@ -133,6 +133,40 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
         _approve(_msgSender(), spender, amount);
         return true;
     }
+    ///TODO
+    ///review
+    /// @notice approve `target` to spend `amount` and call it with data.
+    /// @param target address to be given rights to transfer and destination of the call.
+    /// @param amount the number of tokens allowed.
+    /// @param data bytes for the call.
+    /// @return data of the call.
+    function approveAndCall(
+        address target,
+        uint256 amount,
+        bytes calldata data
+    ) external payable returns (bytes memory) {
+
+        ///TODO
+        ///review
+        ///last param (20 bytes) equals address
+        /*require(
+            BytesUtil.doFirstParamEqualsAddress(data, msg.sender),
+            "first param != sender"
+        );*/
+
+        /*assembly {
+            let sender
+            sender := shr(96, calldataload(sub(calldatasize(), 20)))
+        }*/
+        ///address util and check if its an address
+
+        _approve(_msgSender(), target, amount);
+
+        // solium-disable-next-line security/no-call-value
+        (bool success, bytes memory returnData) = target.call{value:amount}(data);
+        require(success, string(returnData));
+        return returnData;
+    }
 
     /**
      * @dev See {IERC20-transferFrom}.

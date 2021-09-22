@@ -14,6 +14,9 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
+  //TODO
+  //Add try/catch
+
   // We get the contract to deploy
   const beneficiary = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
   const trustedForwarder = "0xF82986F574803dfFd9609BE8b9c7B92f63a1410E";
