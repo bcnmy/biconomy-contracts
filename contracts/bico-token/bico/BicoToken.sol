@@ -518,14 +518,15 @@ library ECDSA {
 
 ///review
 ///TODO
-///ADMIN_ROLE and GOVERNOR_ROLE and if any clash
-///public vs private
-///need of salt
+///public vs private variables
+///make nonces 2D ? solve stack too deep by using structs
+///review permit ref GSN
+///review for any missing events emitting
 contract BicoToken is ERC20Meta, ERC20Burnable, ERC20Pausable, AccessControl, Governed {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPE_HASH = keccak256(
-        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)"
+        "EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)"
     );
     bytes32 public constant DOMAIN_SALT = 0x51f3d585afe6dfeb2af01bba0889a36c1db03beec88c6a4d0c53817069026afa; // Randomly generated salt
     bytes32 public constant APPROVE_TYPEHASH = keccak256(
@@ -552,9 +553,8 @@ contract BicoToken is ERC20Meta, ERC20Burnable, ERC20Pausable, AccessControl, Go
                 DOMAIN_TYPE_HASH,
                 keccak256("Biconomy Token"),
                 keccak256("1"),
-                getChainId(),
                 address(this),
-                DOMAIN_SALT
+                bytes32(getChainId())
             )
         );
     }  
@@ -596,12 +596,12 @@ contract BicoToken is ERC20Meta, ERC20Burnable, ERC20Pausable, AccessControl, Go
                 )
             )
         );
-        nonces[_owner] = nonces[_owner] + 1;
-
+        
         address recoveredAddress = ECDSA.recover(digest, abi.encodePacked(_r, _s, _v));
-        require(_owner == recoveredAddress, "BICO: invalid approval");
-        require(_deadline == 0 || block.timestamp <= _deadline, "BICO: expired approval");
-
+        require(recoveredAddress != address(0), "BICO:: invalid signature");
+        require(_owner == recoveredAddress, "BICO:: invalid approval:Unauthorized");
+        require(_deadline == 0 || block.timestamp <= _deadline, "BICO:: expired approval");
+        nonces[_owner] = nonces[_owner] + 1;
         _approve(_owner, _spender, _value);
     }
 
@@ -640,12 +640,13 @@ contract BicoToken is ERC20Meta, ERC20Burnable, ERC20Pausable, AccessControl, Go
                 )
             )
         );
-        nonces[_sender] = nonces[_sender] + 1;
+        
 
         address recoveredAddress = ECDSA.recover(digest, abi.encodePacked(_r, _s, _v));
-        require(_sender == recoveredAddress, "BICO: invalid transfer");
-        require(_deadline == 0 || block.timestamp <= _deadline, "BICO: expired transfer");
-
+        require(recoveredAddress != address(0), "BICO:: invalid signature");
+        require(_sender == recoveredAddress, "BICO:: invalid transfer:Unauthorized");
+        require(_deadline == 0 || block.timestamp <= _deadline, "BICO:: expired transfer");
+        nonces[_sender] = nonces[_sender] + 1;
         _transfer(_sender, _recipient, _amount);
     }
 
