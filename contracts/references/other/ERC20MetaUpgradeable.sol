@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -31,7 +32,8 @@ import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
+
+contract ERC20MetaUpgradeable is Initializable, ERC2771ContextUpgradeable, IERC20Upgradeable, IERC20MetadataUpgradeable {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -50,8 +52,12 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_, address trustedForwarder_) 
-     ERC2771Context(trustedForwarder_){
+    function __ERC20_init(string memory name_, string memory symbol_, address trustedForwarder_) internal initializer {
+        __ERC2771Context_init_unchained(trustedForwarder_);
+        __ERC20_init_unchained(name_, symbol_);
+    }
+
+    function __ERC20_init_unchained(string memory name_, string memory symbol_) internal initializer {
         _name = name_;
         _symbol = symbol_;
     }
@@ -372,4 +378,5 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
         address to,
         uint256 amount
     ) internal virtual {}
+    uint256[45] private __gap;
 }

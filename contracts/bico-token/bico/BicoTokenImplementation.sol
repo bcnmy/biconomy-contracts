@@ -1,10 +1,41 @@
-// contracts/bico-token/bico/BicoToken.sol
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import "./ERC20Meta.sol";
+import "./BicoTokenStorage.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+/**
+ * @dev Context variant with ERC2771 support.
+ */
+abstract contract ERC2771Context is Initializable, BicoTokenStorage {
+
+    function __ERC2771Context_init(address trustedForwarder) internal initializer {
+         _trustedForwarder = trustedForwarder;
+    }
+    
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return forwarder == _trustedForwarder;
+    }
+
+    function _msgSender() internal view virtual returns (address sender) {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return msg.sender;
+        }
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return msg.data;
+        }
+    }
+}
 
 pragma solidity ^0.8.0;
 
@@ -17,7 +48,7 @@ pragma solidity ^0.8.0;
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is ERC2771Context {
+abstract contract Pausable is Initializable, BicoTokenStorage {
     /**
      * @dev Emitted when the pause is triggered by `account`.
      */
@@ -27,13 +58,11 @@ abstract contract Pausable is ERC2771Context {
      * @dev Emitted when the pause is lifted by `account`.
      */
     event Unpaused(address account);
-
-    bool private _paused;
-
+  
     /**
      * @dev Initializes the contract in unpaused state.
      */
-    constructor() {
+    function __Pausable_init() internal initializer {
         _paused = false;
     }
 
@@ -77,7 +106,7 @@ abstract contract Pausable is ERC2771Context {
      */
     function _pause() internal virtual whenNotPaused {
         _paused = true;
-        emit Paused(_msgSender());
+        emit Paused(msg.sender);
     }
 
     /**
@@ -89,39 +118,9 @@ abstract contract Pausable is ERC2771Context {
      */
     function _unpause() internal virtual whenPaused {
         _paused = false;
-        emit Unpaused(_msgSender());
+        emit Unpaused(msg.sender);
     }
 }
-
-
-pragma solidity ^0.8.0;
-/**
- * @dev ERC20 token with pausable token transfers, minting and burning.
- *
- * Useful for scenarios such as preventing trades until the end of an evaluation
- * period, or having an emergency switch for freezing all token transfers in the
- * event of a large bug.
- */
-abstract contract ERC20Pausable is ERC20Meta, Pausable {
-    /**
-     * @dev See {ERC20-_beforeTokenTransfer}.
-     *
-     * Requirements:
-     *
-     * - the contract must not be paused.
-     */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
-        super._beforeTokenTransfer(from, to, amount);
-
-        require(!paused(), "ERC20Pausable: token transfer while paused");
-    }
-}
-
-pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -165,16 +164,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * grant and revoke this role. Extra precautions should be taken to secure
  * accounts that have been granted it.
  */
-abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
-    struct RoleData {
-        mapping(address => bool) members;
-        bytes32 adminRole;
-    }
-
-    mapping(bytes32 => RoleData) private _roles;
-
-    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
-
+abstract contract AccessControl is Initializable, BicoTokenStorage, IAccessControl, ERC165 {
     /**
      * @dev Modifier that checks that an account has a specific role. Reverts
      * with a standardized message including the required role.
@@ -186,8 +176,16 @@ abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
      * _Available since v4.1._
      */
     modifier onlyRole(bytes32 role) {
-        _checkRole(role, _msgSender());
+        _checkRole(role, msg.sender);
         _;
+    }
+
+    /**
+     * @dev Initializes the contract
+     */
+    function __AccessControl_init(address admin) internal initializer {
+       _setupRole(DEFAULT_ADMIN_ROLE, admin);
+       _setupRole(PAUSER_ROLE, admin);
     }
 
     /**
@@ -278,7 +276,7 @@ abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
      * - the caller must be `account`.
      */
     function renounceRole(bytes32 role, address account) public virtual override {
-        require(account == _msgSender(), "AccessControl: can only renounce roles for self");
+        require(account == msg.sender, "AccessControl: can only renounce roles for self");
 
         _revokeRole(role, account);
     }
@@ -317,20 +315,17 @@ abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
     function _grantRole(bytes32 role, address account) private {
         if (!hasRole(role, account)) {
             _roles[role].members[account] = true;
-            emit RoleGranted(role, account, _msgSender());
+            emit RoleGranted(role, account, msg.sender);
         }
     }
 
     function _revokeRole(bytes32 role, address account) private {
         if (hasRole(role, account)) {
             _roles[role].members[account] = false;
-            emit RoleRevoked(role, account, _msgSender());
+            emit RoleRevoked(role, account, msg.sender);
         }
     }
 }
-
-
-// File contracts/governance/Governed.sol
 
 pragma solidity ^0.8.0;
 
@@ -338,12 +333,8 @@ pragma solidity ^0.8.0;
  * @title Graph Governance contract
  * @dev All contracts that will be owned by a Governor entity should extend this contract.
  */
-contract Governed {
-    // -- State --
-
-    address public governor;
-    address public pendingGovernor;
-
+contract Governed is Initializable, BicoTokenStorage{
+    
     // -- Events --
 
     event NewPendingOwnership(address indexed from, address indexed to);
@@ -358,9 +349,9 @@ contract Governed {
     }
 
     /**
-     * @dev Initialize the governor to the contract caller.
+     * @dev Initializes the contract
      */
-    function _initialize(address _initGovernor) internal {
+    function __Governed_init(address _initGovernor) internal initializer {
         governor = _initGovernor;
     }
 
@@ -477,38 +468,29 @@ library ECDSA {
 }
 
 
-///review
-///TODO
-///public vs private variables
-///make nonces 2D ? solve stack too deep by using structs
-///review permit ref GSN
-///review transfer/approve/increaseAllowance/decreaseAllowance with authorization(signature) needed ref USDC
-///review for any missing events emitting
-contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    /// @notice The EIP-712 typehash for the contract's domain
-    bytes32 public constant DOMAIN_TYPE_HASH = keccak256(
-        "EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)"
-    );
-    bytes32 public constant APPROVE_TYPEHASH = keccak256(
-        "Approve(address owner,address spender,uint256 value,uint256 batchId,uint256 batchNonce,uint256 deadline)"
-    );
-    bytes32 public constant TRANSFER_TYPEHASH = keccak256(
-        "Transfer(address sender,address recipient,uint256 amount,uint256 batchId,uint256 batchNonce,uint256 deadline)"
-    );
-    bytes32 private DOMAIN_SEPARATOR;
-    /// @notice A record of states for signing / validating signatures
-    mapping(address => mapping(uint256 => uint256)) public nonces;
+contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Context, Pausable, AccessControl, Governed {
+    
+     /// @notice The standard EIP-20 transfer event
+    event Transfer(address indexed from, address indexed to, uint256 amount);
 
-    uint256 _totalSupply = 1000000000 * 10 ** decimals();
-    constructor (address beneficiary,address trustedForwarder)
-    ERC20Meta ("Biconomy Token", "BICO",trustedForwarder) {
-        _mint(beneficiary, _totalSupply);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(PAUSER_ROLE, msg.sender);
-        Governed._initialize(msg.sender);
+    /// @notice The standard EIP-20 approval event
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
 
-        // EIP-712 domain separator
+    event TrustedForwarderChanged(address indexed truestedForwarder, address indexed actor);
+
+    /**
+     * @dev Initializes the contract
+     */
+    function initialize(address beneficiary, address trustedForwarder) public initializer {
+       //initial mint
+       _balances[beneficiary] = _totalSupply;
+       emit Transfer(address(0), beneficiary, _totalSupply);
+       __ERC2771Context_init(trustedForwarder);
+       __Pausable_init();
+       __AccessControl_init(msg.sender);
+       __Governed_init(msg.sender);
+
+       // EIP-712 domain separator
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 DOMAIN_TYPE_HASH,
@@ -518,9 +500,260 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
                 bytes32(getChainId())
             )
         );
-    }  
+    }
 
-    event TrustedForwarderChanged(address indexed truestedForwarder, address indexed actor);
+
+    /**
+     * @dev See {IERC20-transfer}.
+     *
+     * Requirements:
+     *
+     * - `recipient` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool) {
+        _transfer(_msgSender(), recipient, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {IERC20-allowance}.
+     */
+    function allowance(address owner, address spender) external view returns (uint256) {
+        return _allowances[owner][spender];
+    }
+
+    /**
+     * @dev See {IERC20-approve}.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function approve(address spender, uint256 amount) external returns (bool) {
+        _approve(_msgSender(), spender, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     * Emits an {Approval} event indicating the updated allowance. This is not
+     * required by the EIP. See the note at the beginning of {ERC20}.
+     *
+     * Requirements:
+     *
+     * - `sender` and `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     * - the caller must have allowance for ``sender``'s tokens of at least
+     * `amount`.
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool) {
+        _transfer(sender, recipient, amount);
+
+        uint256 currentAllowance = _allowances[sender][_msgSender()];
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        unchecked {
+            _approve(sender, _msgSender(), currentAllowance - amount);
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Atomically increases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
+        return true;
+    }
+
+    /**
+     * @dev Atomically decreases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `spender` must have allowance for the caller of at least
+     * `subtractedValue`.
+     */
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+        uint256 currentAllowance = _allowances[_msgSender()][spender];
+        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        unchecked {
+            _approve(_msgSender(), spender, currentAllowance - subtractedValue);
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Moves `amount` of tokens from `sender` to `recipient`.
+     *
+     * This internal function is equivalent to {transfer}, and can be used to
+     * e.g. implement automatic token fees, slashing mechanisms, etc.
+     *
+     * Emits a {Transfer} event.
+     *
+     * Requirements:
+     *
+     * - `sender` cannot be the zero address.
+     * - `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     */
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal virtual {
+        require(sender != address(0), "ERC20: transfer from the zero address");
+        require(recipient != address(0), "ERC20: transfer to the zero address");
+
+        _beforeTokenTransfer(sender, recipient, amount);
+
+        uint256 senderBalance = _balances[sender];
+        require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+        unchecked {
+            _balances[sender] = senderBalance - amount;
+        }
+        _balances[recipient] += amount;
+
+        emit Transfer(sender, recipient, amount);
+
+        _afterTokenTransfer(sender, recipient, amount);
+    }
+
+    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
+     * the total supply.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     */
+    function _mint(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: mint to the zero address");
+
+        _beforeTokenTransfer(address(0), account, amount);
+
+        _totalSupply += amount;
+        _balances[account] += amount;
+        emit Transfer(address(0), account, amount);
+
+        _afterTokenTransfer(address(0), account, amount);
+    }
+
+    /**
+     * @dev Destroys `amount` tokens from `account`, reducing the
+     * total supply.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     * - `account` must have at least `amount` tokens.
+     */
+    function _burn(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+        _beforeTokenTransfer(account, address(0), amount);
+
+        uint256 accountBalance = _balances[account];
+        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        unchecked {
+            _balances[account] = accountBalance - amount;
+        }
+        _totalSupply -= amount;
+
+        emit Transfer(account, address(0), amount);
+
+        _afterTokenTransfer(account, address(0), amount);
+    }
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
+     *
+     * This internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `owner` cannot be the zero address.
+     * - `spender` cannot be the zero address.
+     */
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        _allowances[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+    }
+
+    /**
+     * @dev Hook that is called before any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Calling conditions:
+     *
+     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+     * will be transferred to `to`.
+     * - when `from` is zero, `amount` tokens will be minted for `to`.
+     * - when `to` is zero, `amount` of ``from``'s tokens will be burned.
+     * - `from` and `to` are never both zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
+
+    /**
+     * @dev Hook that is called after any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Calling conditions:
+     *
+     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+     * has been transferred to `to`.
+     * - when `from` is zero, `amount` tokens have been minted for `to`.
+     * - when `to` is zero, `amount` of ``from``'s tokens have been burned.
+     * - `from` and `to` are never both zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
 
     /**
      * @dev returns a value from the nonces 2d mapping
@@ -644,14 +877,6 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
         _transfer(_sender, _recipient, _amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        whenNotPaused
-        override(ERC20Pausable,ERC20Meta)
-    {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
     }
@@ -670,4 +895,5 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
         assembly { chainId := chainid() }
         return chainId;
     }
+
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 /**
@@ -31,7 +32,7 @@ import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
+contract ERC20Meta is Context, IERC20, IERC20Metadata, ERC2771Context {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -50,10 +51,19 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_, address trustedForwarder_) 
-     ERC2771Context(trustedForwarder_){
+    constructor(string memory name_, string memory symbol_, address trustedForwarder_) ERC2771Context(trustedForwarder_){
         _name = name_;
         _symbol = symbol_;
+    }
+
+    function _msgSender() internal virtual override(Context, ERC2771Context)
+      view returns (address) {
+       return ERC2771Context._msgSender();
+    }
+
+    function _msgData() internal virtual override(Context, ERC2771Context)
+      view returns (bytes memory) {
+       return ERC2771Context._msgData();
     }
 
     /**
@@ -132,25 +142,6 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
-    }
-
-    ///TODO
-    ///Write test cases
-    /// @notice approve `target` to spend `amount` and call it with data.
-    /// @param target address to be given rights to transfer and destination of the call.
-    /// @param amount the number of tokens allowed.
-    /// @param data bytes for the call.
-    /// @return data of the call.
-    function approveAndCall(
-        address target,
-        uint256 amount,
-        bytes calldata data
-    ) external payable returns (bytes memory) {
-        _approve(_msgSender(), target, amount);
-        // solium-disable-next-line security/no-call-value
-        (bool success, bytes memory returnData) = target.delegatecall(data);
-        require(success, string(returnData));
-        return returnData;
     }
 
     /**

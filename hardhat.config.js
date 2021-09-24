@@ -59,7 +59,19 @@ module.exports = {
         }
       },
       {
+        version: "0.4.24",
+        settings:{
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
         version: "0.6.9",
+        settings:{
+          optimizer: { enabled: true, runs: 200 }
+        }
+      },
+      {
+        version: "0.6.0",
         settings:{
           optimizer: { enabled: true, runs: 200 }
         }

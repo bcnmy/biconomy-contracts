@@ -1,12 +1,8 @@
-// contracts/bico-token/bico/BicoToken.sol
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import "./ERC20Meta.sol";
-
-pragma solidity ^0.8.0;
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import "./ERC20MetaUpgradeable.sol";
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -17,7 +13,7 @@ pragma solidity ^0.8.0;
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is ERC2771Context {
+abstract contract PausableUpgradeable is Initializable, ERC2771ContextUpgradeable {
     /**
      * @dev Emitted when the pause is triggered by `account`.
      */
@@ -33,7 +29,12 @@ abstract contract Pausable is ERC2771Context {
     /**
      * @dev Initializes the contract in unpaused state.
      */
-    constructor() {
+    function __Pausable_init(address trustedForwarder_) internal initializer {
+        __ERC2771Context_init_unchained(trustedForwarder_);
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal initializer {
         _paused = false;
     }
 
@@ -91,8 +92,8 @@ abstract contract Pausable is ERC2771Context {
         _paused = false;
         emit Unpaused(_msgSender());
     }
+    uint256[49] private __gap;
 }
-
 
 pragma solidity ^0.8.0;
 /**
@@ -102,7 +103,15 @@ pragma solidity ^0.8.0;
  * period, or having an emergency switch for freezing all token transfers in the
  * event of a large bug.
  */
-abstract contract ERC20Pausable is ERC20Meta, Pausable {
+abstract contract ERC20PausableUpgradeable is ERC20MetaUpgradeable, PausableUpgradeable {
+    function __ERC20Pausable_init(address trustedForwarder_) internal initializer {
+        __ERC2771Context_init_unchained(trustedForwarder_);
+        __Pausable_init_unchained();
+        __ERC20Pausable_init_unchained();
+    }
+
+    function __ERC20Pausable_init_unchained() internal initializer {
+    }
     /**
      * @dev See {ERC20-_beforeTokenTransfer}.
      *
@@ -119,13 +128,15 @@ abstract contract ERC20Pausable is ERC20Meta, Pausable {
 
         require(!paused(), "ERC20Pausable: token transfer while paused");
     }
+    uint256[50] private __gap;
 }
+
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/IAccessControl.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 /**
  * @dev Contract module that allows children to implement role-based access
@@ -165,7 +176,15 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * grant and revoke this role. Extra precautions should be taken to secure
  * accounts that have been granted it.
  */
-abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
+abstract contract AccessControlUpgradeable is Initializable, ERC2771ContextUpgradeable, IAccessControlUpgradeable, ERC165Upgradeable {
+    function __AccessControl_init(address trustedForwarder_) internal initializer {
+        __ERC2771Context_init_unchained(trustedForwarder_);
+        __ERC165_init_unchained();
+        __AccessControl_init_unchained();
+    }
+
+    function __AccessControl_init_unchained() internal initializer {
+    }
     struct RoleData {
         mapping(address => bool) members;
         bytes32 adminRole;
@@ -194,7 +213,7 @@ abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IAccessControlUpgradeable).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -217,9 +236,9 @@ abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        Strings.toHexString(uint160(account), 20),
+                        StringsUpgradeable.toHexString(uint160(account), 20),
                         " is missing role ",
-                        Strings.toHexString(uint256(role), 32)
+                        StringsUpgradeable.toHexString(uint256(role), 32)
                     )
                 )
             );
@@ -327,8 +346,8 @@ abstract contract AccessControl is ERC2771Context, IAccessControl, ERC165 {
             emit RoleRevoked(role, account, _msgSender());
         }
     }
+    uint256[49] private __gap;
 }
-
 
 // File contracts/governance/Governed.sol
 
@@ -338,7 +357,7 @@ pragma solidity ^0.8.0;
  * @title Graph Governance contract
  * @dev All contracts that will be owned by a Governor entity should extend this contract.
  */
-contract Governed {
+contract GovernedUpgradeable is Initializable {
     // -- State --
 
     address public governor;
@@ -357,10 +376,11 @@ contract Governed {
         _;
     }
 
-    /**
-     * @dev Initialize the governor to the contract caller.
-     */
-    function _initialize(address _initGovernor) internal {
+    function __Governor_init(address _initGovernor) internal initializer {
+        __Governor_init_unchained(_initGovernor);
+    }
+
+    function __Governor_init_unchained(address _initGovernor) internal initializer {
         governor = _initGovernor;
     }
 
@@ -484,29 +504,34 @@ library ECDSA {
 ///review permit ref GSN
 ///review transfer/approve/increaseAllowance/decreaseAllowance with authorization(signature) needed ref USDC
 ///review for any missing events emitting
-contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
+contract BicoToken is ERC20MetaUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable, GovernedUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPE_HASH = keccak256(
         "EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)"
     );
     bytes32 public constant APPROVE_TYPEHASH = keccak256(
-        "Approve(address owner,address spender,uint256 value,uint256 batchId,uint256 batchNonce,uint256 deadline)"
+        "Approve(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
     );
     bytes32 public constant TRANSFER_TYPEHASH = keccak256(
-        "Transfer(address sender,address recipient,uint256 amount,uint256 batchId,uint256 batchNonce,uint256 deadline)"
+        "Transfer(address sender,address recipient,uint256 amount,uint256 nonce,uint256 deadline)"
     );
     bytes32 private DOMAIN_SEPARATOR;
     /// @notice A record of states for signing / validating signatures
-    mapping(address => mapping(uint256 => uint256)) public nonces;
+    mapping (address => uint) public nonces;
 
     uint256 _totalSupply = 1000000000 * 10 ** decimals();
-    constructor (address beneficiary,address trustedForwarder)
-    ERC20Meta ("Biconomy Token", "BICO",trustedForwarder) {
-        _mint(beneficiary, _totalSupply);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(PAUSER_ROLE, msg.sender);
-        Governed._initialize(msg.sender);
+  
+    constructor() initializer {}
+
+    function initialize(address beneficiary, address trustedForwarder, address deployer) initializer public {
+        __ERC20_init("Biconomy Token", "BICO",trustedForwarder);
+        __Pausable_init(trustedForwarder);
+        __AccessControl_init(trustedForwarder);
+        __Governor_init(deployer);
+        _setupRole(DEFAULT_ADMIN_ROLE, deployer);
+        _setupRole(PAUSER_ROLE, deployer);
+        _mint(deployer, 1000000000 * 10 ** decimals());
 
         // EIP-712 domain separator
         DOMAIN_SEPARATOR = keccak256(
@@ -518,55 +543,28 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
                 bytes32(getChainId())
             )
         );
-    }  
+    }
 
     event TrustedForwarderChanged(address indexed truestedForwarder, address indexed actor);
-
-    /**
-     * @dev returns a value from the nonces 2d mapping
-     * @param from : the user address
-     * @param batchId : the key of the user's batch being queried
-     * @return nonce : the number of transaction made within said batch
-     */
-    function getNonce(address from, uint256 batchId)
-    public view
-    returns (uint256) {
-        return nonces[from][batchId];
-    }
-
-    /**
-     * @dev Increments the nonce of given user/batch pair
-     * @dev Updates the highestBatchId of the given user if the request's batchId > current highest
-     * @dev only intended to be called post call execution
-     * @param _user : owner or sender address
-     * @param _batchId : batch Id
-     */
-    function _updateNonce(address _user, uint256 _batchId) internal {
-        nonces[_user][_batchId]++;
-    }
 
     /**
      * @dev Approve token allowance by validating a message signed by the holder.
      * @param _owner Address of the token holder
      * @param _spender Address of the approved spender
      * @param _value Amount of tokens to approve the spender
-     * @param _batchId Batch Id. pass this 0 if batching is not needed.
-     * @param _batchNonce Batch Nonce. Nonce for given Batch Id
      * @param _deadline Expiration time of the signed approval
      * @param _v Signature version
      * @param _r Signature r value
      * @param _s Signature s value
      */
     function approveWithSig(
-        uint256 _batchNonce,
+        address _owner,
+        address _spender,
+        uint256 _value,
+        uint256 _deadline,
         uint8 _v,
         bytes32 _r,
-        bytes32 _s,
-        uint256 _deadline,
-        address _owner,
-        uint256 _batchId,
-        address _spender,
-        uint256 _value
+        bytes32 _s
     ) external {
         bytes32 digest = keccak256(
             abi.encodePacked(
@@ -578,8 +576,7 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
                         _owner,
                         _spender,
                         _value,
-                        _batchId,
-                        nonces[_owner][_batchId],
+                        nonces[_owner],
                         _deadline
                     )
                 )
@@ -590,7 +587,7 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
         require(recoveredAddress != address(0), "BICO:: invalid signature");
         require(_owner == recoveredAddress, "BICO:: invalid approval:Unauthorized");
         require(_deadline == 0 || block.timestamp <= _deadline, "BICO:: expired approval");
-          _updateNonce(_owner,_batchId);
+        nonces[_owner] = nonces[_owner] + 1;
         _approve(_owner, _spender, _value);
     }
 
@@ -599,23 +596,19 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
      * @param _sender Address of the token sender
      * @param _recipient Address of the token recipient
      * @param _amount Amount of tokens to transfer
-     * @param _batchId Batch Id. pass this 0 if batching is not needed.
-     * @param _batchNonce Batch Nonce. Nonce for given Batch Id
      * @param _deadline Expiration time of the signed approval
      * @param _v Signature version
      * @param _r Signature r value
      * @param _s Signature s value
      */
     function transferWithSig(
-        uint256 _batchNonce,        
+        address _sender,
+        address _recipient,
+        uint256 _amount,
+        uint256 _deadline,
         uint8 _v,
         bytes32 _r,
-        bytes32 _s,
-        uint256 _deadline,
-        address _sender,
-        uint256 _batchId,
-        address _recipient,
-        uint256 _amount
+        bytes32 _s
     ) external {
         bytes32 digest = keccak256(
             abi.encodePacked(
@@ -627,8 +620,7 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
                         _sender,
                         _recipient,
                         _amount,
-                        _batchId,
-                        nonces[_sender][_batchId],
+                        nonces[_sender],
                         _deadline
                     )
                 )
@@ -640,14 +632,14 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
         require(recoveredAddress != address(0), "BICO:: invalid signature");
         require(_sender == recoveredAddress, "BICO:: invalid transfer:Unauthorized");
         require(_deadline == 0 || block.timestamp <= _deadline, "BICO:: expired transfer");
-        _updateNonce(_sender,_batchId);
+        nonces[_sender] = nonces[_sender] + 1;
         _transfer(_sender, _recipient, _amount);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount)
         internal
         whenNotPaused
-        override(ERC20Pausable,ERC20Meta)
+        override(ERC20PausableUpgradeable,ERC20MetaUpgradeable)
     {
         super._beforeTokenTransfer(from, to, amount);
     }
@@ -661,7 +653,7 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
     }
 
     function setTrustedForwarder(address payable _forwarder) external onlyGovernor {
-        _trustedForwarder = _forwarder;
+        __ERC2771Context_init_unchained(_forwarder);
         emit TrustedForwarderChanged(_forwarder, msg.sender);
     }
 
