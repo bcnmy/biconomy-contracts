@@ -28,9 +28,7 @@ import "./BicoTokenStorage.sol";
  * you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.
  */
 contract BicoTokenProxy is TransparentUpgradeableProxy, BicoTokenStorage {
-    constructor (address _admin,address _implementation, bytes memory _data)
-    TransparentUpgradeableProxy(_admin,_implementation,_data) {
-
+    constructor (address _implementation,address _admin)
+    TransparentUpgradeableProxy(_implementation,_admin,bytes("")) {
     }  
-    
 } 
