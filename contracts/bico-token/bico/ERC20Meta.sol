@@ -134,6 +134,7 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
         return true;
     }
 
+    /*
     ///TODO
     ///Write test cases
     /// @notice approve `target` to spend `amount` and call it with data.
@@ -152,6 +153,7 @@ contract ERC20Meta is ERC2771Context, IERC20, IERC20Metadata {
         require(success, string(returnData));
         return returnData;
     }
+    */
 
     /**
      * @dev See {IERC20-transferFrom}.
