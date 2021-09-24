@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+// Created with bootstrapper https://wizard.openzeppelin.com/ 
+// Checkboxes : Pausable, Access Control:Roles, Upgradeability: Transparent
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";

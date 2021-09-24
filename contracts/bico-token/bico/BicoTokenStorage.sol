@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+//TODO
+//review visibility of storage variables
 contract BicoTokenStorage {
     // -- State ERC2771 Context--
     address internal _trustedForwarder;

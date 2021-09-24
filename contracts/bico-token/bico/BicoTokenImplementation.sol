@@ -468,6 +468,8 @@ library ECDSA {
 }
 
 
+//TODO
+//review inheritance tree , initializers : visibility, state, one-time , functions visibility
 contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Context, Pausable, AccessControl, Governed {
     
      /// @notice The standard EIP-20 transfer event
