@@ -87,7 +87,7 @@ interface IERC20Upgradeable {
 
 // File @openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -116,7 +116,7 @@ interface IERC20MetadataUpgradeable is IERC20Upgradeable {
 
 // File @openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -166,7 +166,7 @@ abstract contract Initializable {
 
 // File @openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -200,7 +200,7 @@ abstract contract ContextUpgradeable is Initializable {
 
 // File @openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -564,7 +564,7 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
 
 // File @openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -663,7 +663,7 @@ abstract contract PausableUpgradeable is Initializable, ContextUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -754,7 +754,7 @@ interface IAccessControlUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -824,7 +824,7 @@ library StringsUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -852,7 +852,7 @@ interface IERC165Upgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -890,7 +890,7 @@ abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
 
 // File @openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -1112,7 +1112,7 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
 
 // File contracts/bico-token/BiconomyTokenTransparent.sol
 
-// SPDX-License-Identifier: MIT
+
 // Created with bootstrapper https://wizard.openzeppelin.com/ 
 // Checkboxes : Pausable, Access Control:Roles, Upgradeability: Transparent
 pragma solidity ^0.8.2;

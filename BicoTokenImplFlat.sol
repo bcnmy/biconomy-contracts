@@ -28,17 +28,14 @@ contract BicoTokenStorage {
 
     // -- State Bico Token--
 
-    /// @notice EIP-20 token name for this token
-    string public constant _name = "Biconomy Token";
+    mapping(address => uint256) internal _balances;
 
-    /// @notice EIP-20 token symbol for this token
-    string public constant _symbol = "BICO";
+    mapping(address => mapping(address => uint256)) internal _allowances;
 
-    /// @notice EIP-20 token decimals for this token
-    uint8 public constant _decimals = 18;
+    uint256 internal _totalSupply;
 
-    /// @notice Total number of tokens in circulation
-    uint public _totalSupply = 1000000000 * 10 ** _decimals; // 1 billion BICO
+    string internal _name;
+    string internal _symbol;
 
     /*
     /// @notice Address which may mint new tokens
@@ -53,10 +50,6 @@ contract BicoTokenStorage {
     /// @notice Cap on the percentage of totalSupply that can be minted at each mint
     uint8 public constant mintCap = 2;
     */
-
-    mapping (address => mapping (address => uint256)) internal _allowances;
-
-    mapping (address => uint256) internal _balances;
 
     /*
     /// @notice An event thats emitted when the minter address is changed
@@ -85,7 +78,7 @@ contract BicoTokenStorage {
 
 // File @openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -135,7 +128,7 @@ abstract contract Initializable {
 
 // File @openzeppelin/contracts/access/IAccessControl.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -226,7 +219,7 @@ interface IAccessControl {
 
 // File @openzeppelin/contracts/utils/Strings.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -296,7 +289,7 @@ library Strings {
 
 // File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -324,7 +317,7 @@ interface IERC165 {
 
 // File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -354,7 +347,7 @@ abstract contract ERC165 is IERC165 {
 
 // File contracts/bico-token/bico/BicoTokenImplementation.sol
 
-// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 
@@ -821,7 +814,8 @@ library ECDSA {
 
 
 //TODO
-//review inheritance tree , initializers : visibility, state, one-time , functions visibility
+//review inheritance tree , initializers : (visibility, state, one-time, all state variables are assigned in initialize linear chain), functions visibility
+//review need of view functions in ERC20 interface/base storage contract and visibility of variables 
 contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Context, Pausable, AccessControl, Governed {
     
      /// @notice The standard EIP-20 transfer event
@@ -836,9 +830,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
      * @dev Initializes the contract
      */
     function initialize(address beneficiary, address trustedForwarder) public initializer {
-       //initial mint
-       _balances[beneficiary] = _totalSupply;
-       emit Transfer(address(0), beneficiary, _totalSupply);
+       __BicoTokenImplementation_init_unchained(beneficiary);
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
        __AccessControl_init(msg.sender);
@@ -856,6 +848,58 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         );
     }
 
+    function __BicoTokenImplementation_init_unchained(address beneficiary) internal initializer {
+        uint256 _totalSupply = 1000000000 * 10 ** decimals();
+        _name = "Biconomy Token";
+        _symbol = "BICO";
+        _mint(beneficiary, _totalSupply);
+    }
+
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public view virtual returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public view virtual returns (string memory) {
+        return _symbol;
+    }
+
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     * For example, if `decimals` equals `2`, a balance of `505` tokens should
+     * be displayed to a user as `5.05` (`505 / 10 ** 2`).
+     *
+     * Tokens usually opt for a value of 18, imitating the relationship between
+     * Ether and Wei. This is the value {ERC20} uses, unless this function is
+     * overridden;
+     *
+     * NOTE: This information is only used for _display_ purposes: it in
+     * no way affects any of the arithmetic of the contract, including
+     * {IERC20-balanceOf} and {IERC20-transfer}.
+     */
+    function decimals() public view virtual returns (uint8) {
+        return 18;
+    }
+
+    /**
+     * @dev See {IERC20-totalSupply}.
+     */
+    function totalSupply() public view virtual returns (uint256) {
+        return _totalSupply;
+    }
+
+    /**
+     * @dev See {IERC20-balanceOf}.
+     */
+    function balanceOf(address account) public view virtual returns (uint256) {
+        return _balances[account];
+    }
 
     /**
      * @dev See {IERC20-transfer}.
@@ -865,15 +909,15 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) external returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
-    /**
+     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) external view returns (uint256) {
+    function allowance(address owner, address spender) public view virtual returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -884,10 +928,11 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address spender, uint256 amount) public virtual returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
+
 
     /**
      * @dev See {IERC20-transferFrom}.
@@ -906,7 +951,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         address sender,
         address recipient,
         uint256 amount
-    ) external returns (bool) {
+    ) public virtual returns (bool) {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
@@ -1068,6 +1113,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
+
 
     /**
      * @dev Hook that is called before any transfer of tokens. This includes
