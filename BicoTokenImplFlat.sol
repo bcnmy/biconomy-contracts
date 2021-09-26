@@ -1,84 +1,8 @@
 // Sources flattened with hardhat v2.6.4 https://hardhat.org
 
-// File contracts/bico-token/bico/BicoTokenStorage.sol
-
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-//TODO
-//review visibility of storage variables
-contract BicoTokenStorage {
-    // -- State ERC2771 Context--
-    address internal _trustedForwarder;
-
-    // -- State Pausable--
-    bool internal _paused;   
-
-    // -- State Access Control--
-    struct RoleData {
-        mapping(address => bool) members;
-        bytes32 adminRole;
-    }
-    mapping(bytes32 => RoleData) internal _roles;
-    bytes32 internal constant DEFAULT_ADMIN_ROLE = 0x00;
-    
-    // -- State Governed--
-    address public governor;
-    address public pendingGovernor;
-
-    // -- State Bico Token--
-
-    mapping(address => uint256) internal _balances;
-
-    mapping(address => mapping(address => uint256)) internal _allowances;
-
-    uint256 internal _totalSupply;
-
-    string internal _name;
-    string internal _symbol;
-
-    /*
-    /// @notice Address which may mint new tokens
-    address public minter;
-
-    /// @notice The timestamp after which minting may occur
-    uint public mintingAllowedAfter;
-
-    /// @notice Minimum time between mints
-    uint32 public constant minimumTimeBetweenMints = 1 days * 365;
-
-    /// @notice Cap on the percentage of totalSupply that can be minted at each mint
-    uint8 public constant mintCap = 2;
-    */
-
-    /*
-    /// @notice An event thats emitted when the minter address is changed
-    event MinterChanged(address minter, address newMinter);
-    */
-
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    /// @notice The EIP-712 typehash for the contract's domain
-    bytes32 public constant DOMAIN_TYPE_HASH = keccak256(
-        "EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)"
-    );
-    bytes32 public constant APPROVE_TYPEHASH = keccak256(
-        "Approve(address owner,address spender,uint256 value,uint256 batchId,uint256 batchNonce,uint256 deadline)"
-    );
-    bytes32 public constant TRANSFER_TYPEHASH = keccak256(
-        "Transfer(address sender,address recipient,uint256 amount,uint256 batchId,uint256 batchNonce,uint256 deadline)"
-    );
-    bytes32 internal DOMAIN_SEPARATOR;
-    /// @notice A record of states for signing / validating signatures
-    mapping(address => mapping(uint256 => uint256)) public nonces;
-
-
-
-}
-
-
 // File @openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -126,7 +50,7 @@ abstract contract Initializable {
 }
 
 
-// File @openzeppelin/contracts/access/IAccessControl.sol@v4.3.2
+// File @openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol@v4.3.2
 
 
 
@@ -135,7 +59,7 @@ pragma solidity ^0.8.0;
 /**
  * @dev External interface of AccessControl declared to support ERC165 detection.
  */
-interface IAccessControl {
+interface IAccessControlUpgradeable {
     /**
      * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
      *
@@ -217,7 +141,7 @@ interface IAccessControl {
 }
 
 
-// File @openzeppelin/contracts/utils/Strings.sol@v4.3.2
+// File @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol@v4.3.2
 
 
 
@@ -226,7 +150,7 @@ pragma solidity ^0.8.0;
 /**
  * @dev String operations.
  */
-library Strings {
+library StringsUpgradeable {
     bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
 
     /**
@@ -287,7 +211,7 @@ library Strings {
 }
 
 
-// File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.3.2
+// File @openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol@v4.3.2
 
 
 
@@ -302,7 +226,7 @@ pragma solidity ^0.8.0;
  *
  * For an implementation, see {ERC165}.
  */
-interface IERC165 {
+interface IERC165Upgradeable {
     /**
      * @dev Returns true if this contract implements the interface defined by
      * `interfaceId`. See the corresponding
@@ -315,11 +239,12 @@ interface IERC165 {
 }
 
 
-// File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.3.2
+// File @openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol@v4.3.2
 
 
 
 pragma solidity ^0.8.0;
+
 
 /**
  * @dev Implementation of the {IERC165} interface.
@@ -335,13 +260,20 @@ pragma solidity ^0.8.0;
  *
  * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
  */
-abstract contract ERC165 is IERC165 {
+abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
+    function __ERC165_init() internal initializer {
+        __ERC165_init_unchained();
+    }
+
+    function __ERC165_init_unchained() internal initializer {
+    }
     /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IERC165).interfaceId;
+        return interfaceId == type(IERC165Upgradeable).interfaceId;
     }
+    uint256[50] private __gap;
 }
 
 
@@ -350,14 +282,21 @@ abstract contract ERC165 is IERC165 {
 
 pragma solidity ^0.8.0;
 
-
 /**
  * @dev Context variant with ERC2771 support.
  */
-abstract contract ERC2771Context is Initializable, BicoTokenStorage {
+abstract contract ERC2771ContextUpgradeable is Initializable {
+    /*
+     * Forwarder singleton we accept calls from
+     */
+    address public _trustedForwarder;
 
     function __ERC2771Context_init(address trustedForwarder) internal initializer {
-         _trustedForwarder = trustedForwarder;
+        __ERC2771Context_init_unchained(trustedForwarder);
+    }
+
+    function __ERC2771Context_init_unchained(address trustedForwarder) internal initializer {
+        _trustedForwarder = trustedForwarder;
     }
     
     function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
@@ -382,6 +321,7 @@ abstract contract ERC2771Context is Initializable, BicoTokenStorage {
             return msg.data;
         }
     }
+    uint256[49] private __gap;
 }
 
 pragma solidity ^0.8.0;
@@ -395,7 +335,7 @@ pragma solidity ^0.8.0;
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is Initializable, BicoTokenStorage {
+abstract contract PausableUpgradeable is Initializable {
     /**
      * @dev Emitted when the pause is triggered by `account`.
      */
@@ -405,11 +345,17 @@ abstract contract Pausable is Initializable, BicoTokenStorage {
      * @dev Emitted when the pause is lifted by `account`.
      */
     event Unpaused(address account);
+
+    bool private _paused;
   
     /**
      * @dev Initializes the contract in unpaused state.
      */
     function __Pausable_init() internal initializer {
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal initializer {
         _paused = false;
     }
 
@@ -467,6 +413,7 @@ abstract contract Pausable is Initializable, BicoTokenStorage {
         _paused = false;
         emit Unpaused(msg.sender);
     }
+    uint256[49] private __gap;
 }
 
 
@@ -509,7 +456,23 @@ abstract contract Pausable is Initializable, BicoTokenStorage {
  * grant and revoke this role. Extra precautions should be taken to secure
  * accounts that have been granted it.
  */
-abstract contract AccessControl is Initializable, BicoTokenStorage, IAccessControl, ERC165 {
+abstract contract AccessControlUpgradeable is Initializable, IAccessControlUpgradeable, ERC165Upgradeable {
+    function __AccessControl_init() internal initializer {
+        __ERC165_init_unchained();
+        __AccessControl_init_unchained();
+    }
+
+    function __AccessControl_init_unchained() internal initializer {
+    }
+    struct RoleData {
+        mapping(address => bool) members;
+        bytes32 adminRole;
+    }
+
+    mapping(bytes32 => RoleData) private _roles;
+
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
     /**
      * @dev Modifier that checks that an account has a specific role. Reverts
      * with a standardized message including the required role.
@@ -526,18 +489,10 @@ abstract contract AccessControl is Initializable, BicoTokenStorage, IAccessContr
     }
 
     /**
-     * @dev Initializes the contract
-     */
-    function __AccessControl_init(address admin) internal initializer {
-       _setupRole(DEFAULT_ADMIN_ROLE, admin);
-       _setupRole(PAUSER_ROLE, admin);
-    }
-
-    /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IAccessControlUpgradeable).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -560,9 +515,9 @@ abstract contract AccessControl is Initializable, BicoTokenStorage, IAccessContr
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        Strings.toHexString(uint160(account), 20),
+                        StringsUpgradeable.toHexString(uint160(account), 20),
                         " is missing role ",
-                        Strings.toHexString(uint256(role), 32)
+                        StringsUpgradeable.toHexString(uint256(role), 32)
                     )
                 )
             );
@@ -670,16 +625,21 @@ abstract contract AccessControl is Initializable, BicoTokenStorage, IAccessContr
             emit RoleRevoked(role, account, msg.sender);
         }
     }
+    uint256[49] private __gap;
 }
 
 pragma solidity ^0.8.0;
 
 /**
- * @title Graph Governance contract
+ * @title Biconomy Protocol Governance contract
  * @dev All contracts that will be owned by a Governor entity should extend this contract.
  */
-contract Governed is Initializable, BicoTokenStorage{
-    
+contract GovernedUpgradeable is Initializable {
+    // -- State --
+
+    address public governor;
+    address public pendingGovernor;
+
     // -- Events --
 
     event NewPendingOwnership(address indexed from, address indexed to);
@@ -694,9 +654,13 @@ contract Governed is Initializable, BicoTokenStorage{
     }
 
     /**
-     * @dev Initializes the contract
+     * @dev Initialize the governor to the contract caller.
      */
     function __Governed_init(address _initGovernor) internal initializer {
+        __Governed_init_unchained(_initGovernor);
+    }
+
+    function __Governed_init_unchained(address _initGovernor) internal initializer {
         governor = _initGovernor;
     }
 
@@ -733,6 +697,7 @@ contract Governed is Initializable, BicoTokenStorage{
         emit NewOwnership(oldGovernor, governor);
         emit NewPendingOwnership(oldPendingGovernor, pendingGovernor);
     }
+    uint256[49] private __gap;
 }
 
 pragma solidity ^0.8.0;
@@ -813,18 +778,63 @@ library ECDSA {
 }
 
 
-//TODO
-//review inheritance tree , initializers : (visibility, state, one-time, all state variables are assigned in initialize linear chain), functions visibility
-//review need of view functions in ERC20 interface/base storage contract and visibility of variables 
-contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Context, Pausable, AccessControl, Governed {
-    
-     /// @notice The standard EIP-20 transfer event
-    event Transfer(address indexed from, address indexed to, uint256 amount);
+//review
+contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, PausableUpgradeable, AccessControlUpgradeable, GovernedUpgradeable {
+    // -- State ERC20--
+    mapping(address => uint256) private _balances;
 
-    /// @notice The standard EIP-20 approval event
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
+    mapping(address => mapping(address => uint256)) private _allowances;
 
+    uint256 private _totalSupply;
+
+    string private _name;
+    string private _symbol;
+
+    // -- State Access Control custom roles--
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
+    // -- State Gas abstraction methods--
+
+    /// @notice The EIP-712 typehash for the contract's domain
+    bytes32 public constant DOMAIN_TYPE_HASH = keccak256(
+        "EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)"
+    );
+    bytes32 public constant APPROVE_TYPEHASH = keccak256(
+        "Approve(address owner,address spender,uint256 value,uint256 batchId,uint256 batchNonce,uint256 deadline)"
+    );
+    bytes32 public constant TRANSFER_TYPEHASH = keccak256(
+        "Transfer(address sender,address recipient,uint256 amount,uint256 batchId,uint256 batchNonce,uint256 deadline)"
+    );
+    bytes32 private DOMAIN_SEPARATOR;
+    /// @notice A record of states for signing / validating signatures
+    mapping(address => mapping(uint256 => uint256)) public nonces;
+
+    // -- Events--
+
+    /**
+     * @dev Emitted when trusted forwarder is updated to 
+     * another (`trustedForwarder`).
+     *
+     * Note that `trustedForwarder` may be zero. `actor` is msg.sender for this action.
+     */
     event TrustedForwarderChanged(address indexed truestedForwarder, address indexed actor);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() initializer {}
 
     /**
      * @dev Initializes the contract
@@ -833,10 +843,26 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
        __BicoTokenImplementation_init_unchained(beneficiary);
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
-       __AccessControl_init(msg.sender);
+       __AccessControl_init();
        __Governed_init(msg.sender);
+    }
 
-       // EIP-712 domain separator
+    function __BicoTokenImplementation_init(address beneficiary, address trustedForwarder) internal initializer {
+       __ERC2771Context_init(trustedForwarder);
+       __Pausable_init();
+       __AccessControl_init();
+       __Governed_init(msg.sender);
+       __BicoTokenImplementation_init_unchained(beneficiary);
+    }
+
+    function __BicoTokenImplementation_init_unchained(address beneficiary) internal initializer {
+        _name = "Biconomy Token";
+        _symbol = "BICO";
+        _mint(msg.sender, 1000000000 * 10 ** decimals());
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(PAUSER_ROLE, msg.sender);
+
+        // EIP-712 domain separator
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 DOMAIN_TYPE_HASH,
@@ -846,13 +872,6 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
                 bytes32(getChainId())
             )
         );
-    }
-
-    function __BicoTokenImplementation_init_unchained(address beneficiary) internal initializer {
-        uint256 _totalSupply = 1000000000 * 10 ** decimals();
-        _name = "Biconomy Token";
-        _symbol = "BICO";
-        _mint(beneficiary, _totalSupply);
     }
 
     /**
@@ -901,6 +920,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         return _balances[account];
     }
 
+
     /**
      * @dev See {IERC20-transfer}.
      *
@@ -914,7 +934,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         return true;
     }
 
-     /**
+    /**
      * @dev See {IERC20-allowance}.
      */
     function allowance(address owner, address spender) public view virtual returns (uint256) {
@@ -932,6 +952,22 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         _approve(_msgSender(), spender, amount);
         return true;
     }
+
+    /*
+    ///TODO
+    ///review the need for this feature and how to securely implement it without breaking changes
+    ///Write test cases
+    /// @notice approve `target` to spend `amount` and call it with data.
+    /// @param target address to be given rights to transfer and destination of the call.
+    /// @param amount the number of tokens allowed.
+    /// @param data bytes for the call.
+    /// @return data of the call.
+    function approveAndCall(
+        address target,
+        uint256 amount,
+        bytes calldata data
+    ) external payable returns (bytes memory) {
+    }*/
 
 
     /**
@@ -1156,18 +1192,6 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
     ) internal virtual {}
 
     /**
-     * @dev returns a value from the nonces 2d mapping
-     * @param from : the user address
-     * @param batchId : the key of the user's batch being queried
-     * @return nonce : the number of transaction made within said batch
-     */
-    function getNonce(address from, uint256 batchId)
-    public view
-    returns (uint256) {
-        return nonces[from][batchId];
-    }
-
-    /**
      * @dev Increments the nonce of given user/batch pair
      * @dev Updates the highestBatchId of the given user if the request's batchId > current highest
      * @dev only intended to be called post call execution
@@ -1200,7 +1224,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         uint256 _batchId,
         address _spender,
         uint256 _value
-    ) external {
+    ) public virtual {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -1249,7 +1273,7 @@ contract BicoTokenImplementation is Initializable, BicoTokenStorage, ERC2771Cont
         uint256 _batchId,
         address _recipient,
         uint256 _amount
-    ) external {
+    ) public virtual {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",

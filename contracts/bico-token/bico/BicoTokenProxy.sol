@@ -4,7 +4,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "./BicoTokenStorage.sol";
 
 /**
  * @dev This contract implements a proxy that is upgradeable by an admin.
@@ -27,7 +26,7 @@ import "./BicoTokenStorage.sol";
  * Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way,
  * you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.
  */
-contract BicoTokenProxy is TransparentUpgradeableProxy, BicoTokenStorage {
+contract BicoTokenProxy is TransparentUpgradeableProxy {
     constructor (address _implementation,address _admin)
     TransparentUpgradeableProxy(_implementation,_admin,bytes("")) {
     }  
