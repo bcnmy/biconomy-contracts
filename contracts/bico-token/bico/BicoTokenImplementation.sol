@@ -713,11 +713,8 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
-        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
-        unchecked {
-            _approve(sender, _msgSender(), currentAllowance - amount);
-        }
-
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");        
+        _approve(sender, _msgSender(), currentAllowance - amount);
         return true;
     }
 
@@ -755,10 +752,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-        unchecked {
-            _approve(_msgSender(), spender, currentAllowance - subtractedValue);
-        }
-
+        _approve(_msgSender(), spender, currentAllowance - subtractedValue);
         return true;
     }
 
@@ -788,9 +782,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
 
         uint256 senderBalance = _balances[sender];
         require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
-        unchecked {
-            _balances[sender] = senderBalance - amount;
-        }
+        _balances[sender] = senderBalance - amount;
         _balances[recipient] += amount;
 
         emit Transfer(sender, recipient, amount);
@@ -837,9 +829,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
 
         uint256 accountBalance = _balances[account];
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
-        unchecked {
-            _balances[account] = accountBalance - amount;
-        }
+        _balances[account] = accountBalance - amount;
         _totalSupply -= amount;
 
         emit Transfer(account, address(0), amount);
