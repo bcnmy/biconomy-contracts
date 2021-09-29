@@ -580,7 +580,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     function __BicoTokenImplementation_init_unchained(address beneficiary) internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
-        _mint(msg.sender, 1000000000 * 10 ** decimals());
+        _mint(beneficiary, 1000000000 * 10 ** decimals());
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(PAUSER_ROLE, msg.sender);
 
