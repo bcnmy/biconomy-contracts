@@ -52,7 +52,7 @@ abstract contract Initializable {
 
 // File @openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -143,7 +143,7 @@ interface IAccessControlUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -213,7 +213,7 @@ library StringsUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -241,7 +241,7 @@ interface IERC165Upgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol@v4.3.2
 
-// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
@@ -279,7 +279,7 @@ abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
 
 // File contracts/bico-token/bico/BicoTokenImplementation.sol
 
-// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 /**
