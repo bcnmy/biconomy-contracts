@@ -44,7 +44,7 @@ abstract contract ERC2771ContextUpgradeable is Initializable {
     uint256[49] private __gap;
 }
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -350,7 +350,7 @@ abstract contract AccessControlUpgradeable is Initializable, IAccessControlUpgra
     uint256[49] private __gap;
 }
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @title Biconomy Protocol Governance contract
@@ -422,7 +422,7 @@ contract GovernedUpgradeable is Initializable {
     uint256[49] private __gap;
 }
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
@@ -554,9 +554,6 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * a call to {approve}. `value` is the new allowance.
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() initializer {}
 
     /**
      * @dev Initializes the contract
