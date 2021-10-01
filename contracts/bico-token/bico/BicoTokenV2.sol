@@ -19,7 +19,7 @@ contract BicoTokenV2 is BicoTokenImplementation {
     uint8 public constant mintCap = 2;
 
     function initializeV2() external{
-        require(!_initializedV2, "BicoTokenV2: cpntract is already initialized");
+        require(!_initializedV2, "BicoTokenV2: contract is already initialized");
         //__BicoTokenImplementation_init(trustedForwarder); // Do not forget this call!
         minter = msg.sender;
         mintingAllowedAfter = 0;

@@ -566,7 +566,9 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        __AccessControl_init();
        __Governed_init(msg.sender);
     }
-
+    
+    //review the need for this method + refer to openzeppelin upgrade safe doc again regarding inits
+    //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
     function __BicoTokenImplementation_init(address trustedForwarder) internal initializer {
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
@@ -575,6 +577,8 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        __BicoTokenImplementation_init_unchained();
     }
 
+    //review
+    //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
     function __BicoTokenImplementation_init_unchained() internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
