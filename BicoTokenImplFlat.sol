@@ -52,7 +52,7 @@ abstract contract Initializable {
 
 // File @openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -143,7 +143,7 @@ interface IAccessControlUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -213,7 +213,7 @@ library StringsUpgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -241,7 +241,7 @@ interface IERC165Upgradeable {
 
 // File @openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -279,7 +279,7 @@ abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
 
 // File contracts/bico-token/bico/BicoTokenImplementation.sol
 
-
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 /**
@@ -840,25 +840,25 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * @dev Initializes the contract
      */
     function initialize(address beneficiary, address trustedForwarder) public initializer {
-       __BicoTokenImplementation_init_unchained(beneficiary);
+       __BicoTokenImplementation_init_unchained();
+       _mint(beneficiary, 1000000000 * 10 ** decimals());
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
        __AccessControl_init();
        __Governed_init(msg.sender);
     }
 
-    function __BicoTokenImplementation_init(address beneficiary, address trustedForwarder) internal initializer {
+    function __BicoTokenImplementation_init(address trustedForwarder) internal initializer {
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
        __AccessControl_init();
        __Governed_init(msg.sender);
-       __BicoTokenImplementation_init_unchained(beneficiary);
+       __BicoTokenImplementation_init_unchained();
     }
 
-    function __BicoTokenImplementation_init_unchained(address beneficiary) internal initializer {
+    function __BicoTokenImplementation_init_unchained() internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
-        _mint(beneficiary, 1000000000 * 10 ** decimals());
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(PAUSER_ROLE, msg.sender);
 

@@ -660,10 +660,10 @@ contract BicoToken is ERC20Meta, ERC20Pausable, AccessControl, Governed {
         _unpause();
     }
 
-    function setTrustedForwarder(address payable _forwarder) external onlyGovernor {
+    /*function setTrustedForwarder(address payable _forwarder) external onlyGovernor {
         _trustedForwarder = _forwarder;
         emit TrustedForwarderChanged(_forwarder, msg.sender);
-    }
+    }*/
 
     function getChainId() internal view returns (uint) {
         uint256 chainId;
