@@ -694,7 +694,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual nonReentrant returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual nonReentrant whenNotPaused returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -752,7 +752,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual nonReentrant returns (bool) {
+    ) public virtual nonReentrant whenNotPaused returns (bool) {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
@@ -860,6 +860,8 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         _afterTokenTransfer(address(0), account, amount);
     }
 
+    //review
+    //there is no public burn() method. Do we need to make tokens burnable?
     /**
      * @dev Destroys `amount` tokens from `account`, reducing the
      * total supply.
@@ -1036,7 +1038,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         uint256 _batchId,
         address _recipient,
         uint256 _amount
-    ) public virtual nonReentrant {
+    ) public virtual nonReentrant whenNotPaused {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
