@@ -505,6 +505,8 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     // -- State ERC20--
     mapping(address => uint256) private _balances;
 
+    uint8 internal _initializedVersion;
+
     mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
@@ -514,6 +516,16 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
 
     // -- State Access Control custom roles--
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    /// @notice The timestamp after which minting may occur
+    uint public mintingAllowedAfter;
+
+    /// @notice Minimum time between mints
+    uint32 public minimumTimeBetweenMints;
+
+    /// @notice Cap on the percentage of totalSupply that can be minted at each mint
+    uint8 public mintCap;
 
     // -- State Gas abstraction methods--
 
@@ -542,6 +554,27 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     event TrustedForwarderChanged(address indexed truestedForwarder, address indexed actor);
 
     /**
+     * @dev Emitted when minting allowed after timestamp is changed through governance
+     *
+     * Note that `_mintingAllowedAfter` may be zero. `actor` is msg.sender for this action.
+     */
+    event MintingAllowedAfterChanged(uint indexed _mintingAllowedAfter, address indexed actor);
+
+    /**
+     * @dev Emitted when minimum time between mints is changed through governance
+     *
+     * Note that `_minimumTimeBetweenMints` may be zero. `actor` is msg.sender for this action.
+     */
+    event MinimumTimeBetweenMintsChanged(uint32 _minimumTimeBetweenMints, address indexed actor);
+
+    /**
+     * @dev Emitted when mint cap is changed through governance
+     *
+     * Note that `_mintCap` may be zero. `actor` is msg.sender for this action.
+     */
+    event MintCapChanged(uint8 _mintCap, address indexed actor);
+
+    /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
      * another (`to`).
      *
@@ -565,8 +598,13 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        __Pausable_init();
        __AccessControl_init();
        __Governed_init(msg.sender);
+       _initializedVersion = 0;
+       mintingAllowedAfter = 0;
+       minimumTimeBetweenMints = 1 days * 365;
+       mintCap = 2;
     }
     
+    /*
     //review the need for this method + refer to openzeppelin upgrade safe doc again regarding inits
     //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
     function __BicoTokenImplementation_init(address trustedForwarder) internal initializer {
@@ -576,6 +614,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        __Governed_init(msg.sender);
        __BicoTokenImplementation_init_unchained();
     }
+    */
 
     //review
     //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
@@ -584,6 +623,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         _symbol = "BICO";
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(PAUSER_ROLE, msg.sender);
+        _setupRole(MINTER_ROLE, msg.sender);
 
         // EIP-712 domain separator
         DOMAIN_SEPARATOR = keccak256(
@@ -1031,8 +1071,24 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     }
 
     function setTrustedForwarder(address payable _forwarder) external onlyGovernor {
+        require(_forwarder != address(0), "Invalid address for new trusted forwarder");
         _trustedForwarder = _forwarder;
         emit TrustedForwarderChanged(_forwarder, msg.sender);
+    }
+
+    function setMintingAllowedAfter(uint _mintingAllowedAfter) external onlyGovernor {
+        mintingAllowedAfter = _mintingAllowedAfter;
+        emit MintingAllowedAfterChanged(_mintingAllowedAfter,msg.sender);
+    }
+
+    function setMinimumTimeBetweenMints(uint32 _minimumTimeBetweenMints) external onlyGovernor {
+        minimumTimeBetweenMints = _minimumTimeBetweenMints;
+        emit MinimumTimeBetweenMintsChanged(_minimumTimeBetweenMints,msg.sender);
+    }
+
+    function setMintCap(uint8 _mintCap) external onlyGovernor {
+        mintCap = _mintCap;
+        emit MintCapChanged(_mintCap, msg.sender);
     }
 
     function getChainId() internal view returns (uint) {
