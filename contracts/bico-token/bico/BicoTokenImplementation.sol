@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @dev Context variant with ERC2771 support.
@@ -501,7 +502,7 @@ library ECDSA {
 
 
 //review
-contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, PausableUpgradeable, AccessControlUpgradeable, GovernedUpgradeable {
+contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, PausableUpgradeable, AccessControlUpgradeable, GovernedUpgradeable, ReentrancyGuardUpgradeable {
     // -- State ERC20--
     mapping(address => uint256) private _balances;
 
@@ -598,6 +599,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        __Pausable_init();
        __AccessControl_init();
        __Governed_init(msg.sender);
+       __ReentrancyGuard_init();
        _initializedVersion = 0;
        mintingAllowedAfter = 0;
        minimumTimeBetweenMints = 1 days * 365;
@@ -692,7 +694,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual nonReentrant returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -711,7 +713,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual returns (bool) {
+    function approve(address spender, uint256 amount) public virtual nonReentrant returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -750,7 +752,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual returns (bool) {
+    ) public virtual nonReentrant returns (bool) {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
@@ -773,7 +775,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public virtual nonReentrant returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
         return true;
     }
@@ -792,7 +794,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual nonReentrant returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
         unchecked {
@@ -985,7 +987,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         uint256 _batchId,
         address _spender,
         uint256 _value
-    ) public virtual {
+    ) public virtual nonReentrant {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -1034,7 +1036,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         uint256 _batchId,
         address _recipient,
         uint256 _amount
-    ) public virtual {
+    ) public virtual nonReentrant {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
