@@ -76,7 +76,7 @@ describe("ERC20 :: BICO ", function () {
         );
         bicoTokenProxy = await BicoProxy.deploy(
             bicoToken.address,
-            await accounts[1].getAddress()
+            await accounts[7].getAddress()  // admin address
         );
         await bicoTokenProxy.deployed();
 
@@ -94,7 +94,11 @@ describe("ERC20 :: BICO ", function () {
     describe("Token storage reads checks", function () {
         it("Should be able to read state variables through view mothods as expected values", async function () {
             const name = "Biconomy Token";
+            const trustedForwarder = biconomyForwarder.address;
+            const beneficiary = await accounts[0].getAddress();
             expect(await bicoToInteract.name()).to.equal(name);
+            expect(await bicoToInteract.isTrustedForwarder(trustedForwarder)).to.equal(true);
+            console.log(await bicoToInteract.balanceOf(beneficiary));
         });
     });
 
