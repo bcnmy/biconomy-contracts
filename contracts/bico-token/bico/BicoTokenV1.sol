@@ -5,13 +5,13 @@ import "./BicoTokenImplementation.sol";
 
 contract BicoTokenV1 is BicoTokenImplementation {
    
-    bool internal _initializedV2;
+    bool internal _initializedV1;
 
-    function initializeV2() external{
-        require(!_initializedV2, "BicoTokenV1: contract is already initialized");
+    function initializeV1() external{
+        require(!_initializedV1, "BicoTokenV1: contract is already initialized");
         require(_initializedVersion == 0, "BicoTokenV1: version 0 must be initialized");
         //__BicoTokenImplementation_init(trustedForwarder); // forget this call!
-        _initializedV2 = true;
+        _initializedV1 = true;
         _initializedVersion = 1;
     }
     
