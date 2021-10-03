@@ -10,6 +10,7 @@ describe("ERC20 :: BICO ", function () {
     let bicoTokenProxy;
     let bicoToInteract;
     let biconomyForwarder;
+    let firstHolder;
 
     let domainType = [
         { name: "name", type: "string" },
@@ -32,6 +33,7 @@ describe("ERC20 :: BICO ", function () {
 
     before(async function () {
         accounts = await ethers.getSigners();
+        firstHolder = await accounts[0].getAddress();
 
         const Forwarder = await ethers.getContractFactory("BiconomyForwarder");
         biconomyForwarder = await Forwarder.deploy(await accounts[0].getAddress());
@@ -47,7 +49,7 @@ describe("ERC20 :: BICO ", function () {
             version: "1",
             verifyingContract: biconomyForwarder.address,
             salt: ethers.utils.hexZeroPad(salt.toHexString(), 32)
-          };
+        };
 
         await biconomyForwarder.registerDomainSeparator("BiconomyForwarder", "1");
         domainSeparator = ethers.utils.keccak256(
@@ -96,10 +98,65 @@ describe("ERC20 :: BICO ", function () {
             const name = "Biconomy Token";
             const trustedForwarder = biconomyForwarder.address;
             const beneficiary = await accounts[0].getAddress();
+            const beneficiaryBalance = "1000000000000000000000000000";
             expect(await bicoToInteract.name()).to.equal(name);
             expect(await bicoToInteract.isTrustedForwarder(trustedForwarder)).to.equal(true);
-            console.log(await bicoToInteract.balanceOf(beneficiary));
+            expect((await bicoToInteract.balanceOf(beneficiary)).toString()).to.equal(beneficiaryBalance);
+            expect(await bicoToInteract.totalSupply()).to.equal(beneficiaryBalance);
         });
+    });
+
+    describe("Transactions", function () {
+        it("Should transfer tokens between accounts", async function () {
+            const addr1 = await accounts[1].getAddress();
+            const addr2 = await accounts[2].getAddress();
+
+            // Transfer 50 tokens from beneficiary to addr1
+            await bicoToInteract.transfer(addr1, ethers.BigNumber.from("50000000000000000000"));
+            expect(await bicoToInteract.balanceOf(addr1)).to.equal(ethers.BigNumber.from("50000000000000000000"));
+
+            // Transfer 50 tokens from addr1 to addr2
+            await bicoToInteract.connect(accounts[1]).transfer(addr2, ethers.BigNumber.from("50000000000000000000"));
+            expect(await bicoToInteract.balanceOf(addr2)).to.equal(ethers.BigNumber.from("50000000000000000000"));
+        });
+
+        it("Should fail if sender doesn’t have enough tokens", async function () {
+            const beneficiary = await accounts[0].getAddress();
+            const initialOwnerBalance = await bicoToInteract.balanceOf(beneficiary);
+            const beneficiaryBalance = "999999950000000000000000000";
+
+            // Try to send 1 token from addr1 (0 tokens) to owner (1000000 tokens).
+            // `require` will evaluate false and revert the transaction.
+            await expect(
+                bicoToInteract.connect(accounts[1]).transfer(beneficiary, ethers.BigNumber.from("1000000000000000000"))
+            ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+
+            // Owner balance shouldn't have changed.
+            expect(await bicoToInteract.balanceOf(beneficiary)).to.equal(
+                beneficiaryBalance
+            );
+        });
+
+        it("Should update balances after transfers", async function () {
+            const initialOwnerBalance = await bicoToInteract.balanceOf(firstHolder);
+            const addr3 = await accounts[3].getAddress();
+            const addr4 = await accounts[4].getAddress();
+            // Transfer 100 tokens from owner to addr1.
+            await bicoToInteract.transfer(addr3, ethers.BigNumber.from("100000000000000000000"));
+      
+            // Transfer another 50 tokens from owner to addr2.
+            await bicoToInteract.transfer(addr4, ethers.BigNumber.from("50000000000000000000"));
+      
+            // Check balances.
+            const finalOwnerBalance = await bicoToInteract.balanceOf(firstHolder);
+            expect(finalOwnerBalance).to.equal(initialOwnerBalance.sub(ethers.BigNumber.from("150000000000000000000")));
+      
+            const addr3Balance = await bicoToInteract.balanceOf(addr3);
+            expect(addr3Balance).to.equal(ethers.BigNumber.from("100000000000000000000"));
+      
+            const addr4Balance = await bicoToInteract.balanceOf(addr4);
+            expect(addr4Balance).to.equal(ethers.BigNumber.from("50000000000000000000"));
+          });
     });
 
 });
