@@ -29,5 +29,19 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 contract BicoTokenProxy is TransparentUpgradeableProxy {
     constructor (address _implementation,address _admin)
     TransparentUpgradeableProxy(_implementation,_admin,bytes("")) {
-    }  
+    }
+
+    function getAdmin() external view returns (address adm) {
+      bytes32 slot = _ADMIN_SLOT;
+      assembly {
+        adm := sload(slot)
+      }
+    }
+
+    function getImplementation() external view returns (address impl) {
+      bytes32 slot = _IMPLEMENTATION_SLOT;
+      assembly {
+        impl := sload(slot)
+      }
+    }    
 } 
