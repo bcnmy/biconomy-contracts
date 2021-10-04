@@ -12,6 +12,7 @@ describe("ERC20 :: BICO ", function () {
     let bicoToInteract;
     let biconomyForwarder;
     let firstHolder;
+    const zero_address = "0x0000000000000000000000000000000000000000";
 
     let domainType = [
         { name: "name", type: "string" },
@@ -42,6 +43,18 @@ describe("ERC20 :: BICO ", function () {
         { name: "batchNonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
     ];
+
+    let ERC20ForwardRequest = [
+        { name: "from", type: "address" },
+        { name: "to", type: "address" },
+        { name: "token", type: "address" },
+        { name: "txGas", type: "uint256" },
+        { name: "tokenGasPrice", type: "uint256" },
+        { name: "batchId", type: "uint256" },
+        { name: "batchNonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+        { name: "data", type: "bytes" },
+      ];
 
     before(async function () {
         accounts = await ethers.getSigners();
@@ -179,6 +192,165 @@ describe("ERC20 :: BICO ", function () {
             await bicoToInteract.connect(accounts[3]).transferFrom(firstHolder,addr4,amount);
             console.log("Allowance used to transfer tokens to addr4 from the owner");
         });
-    });
 
+        describe("Personal Sign - Trusted Forwarder", function () {
+            it("Transfer BICO : Executes call successfully", async function () {
+                const addr5 = await accounts[5].getAddress();
+                const amount = ethers.BigNumber.from("50000000000000000000");
+                const req = await bicoToInteract.populateTransaction.transfer(addr5, amount.toString());
+                const batchId = 0;
+                const batchNonce = await biconomyForwarder.getNonce(firstHolder, batchId);
+                req.from = firstHolder;
+                req.batchId = batchId;
+                req.batchNonce = batchNonce.toNumber();
+                req.batchId = batchId;
+                req.txGas = req.gasLimit.toNumber();
+                req.tokenGasPrice = 0;
+                req.deadline = 0;
+                req.token = zero_address;
+                delete req.gasPrice;
+                delete req.gasLimit;
+                delete req.chainId;
+
+                const hashToSign = abi.soliditySHA3(
+                    [
+                      "address",
+                      "address",
+                      "address",
+                      "uint256",
+                      "uint256",
+                      "uint256",
+                      "uint256",
+                      "uint256",
+                      "bytes32",
+                    ],
+                    [
+                      req.from,
+                      req.to,
+                      req.token,
+                      req.txGas,
+                      req.tokenGasPrice,
+                      req.batchId,
+                      req.batchNonce,
+                      req.deadline,
+                      ethers.utils.keccak256(req.data),
+                    ]
+                  );
+
+                const sig = await accounts[0].signMessage(hashToSign);
+                const tx = await biconomyForwarder.executePersonalSign(req, sig);
+                const receipt = await tx.wait(confirmations = 1);
+                console.log(`gas used from receipt ${receipt.gasUsed.toNumber()}`);
+            });
+
+            it("Approve BICO : Executes call successfully", async function () {
+                const addr5 = await accounts[5].getAddress();
+                const amount = ethers.BigNumber.from("50000000000000000000");
+                const req = await bicoToInteract.populateTransaction.approve(addr5, amount.toString());
+                const batchId = 0;
+                const batchNonce = await biconomyForwarder.getNonce(firstHolder, batchId);
+                req.from = firstHolder;
+                req.batchId = batchId;
+                req.batchNonce = batchNonce.toNumber();
+                req.batchId = batchId;
+                req.txGas = req.gasLimit.toNumber();
+                req.tokenGasPrice = 0;
+                req.deadline = 0;
+                req.token = zero_address;
+                delete req.gasPrice;
+                delete req.gasLimit;
+                delete req.chainId;
+
+                const hashToSign = abi.soliditySHA3(
+                    [
+                      "address",
+                      "address",
+                      "address",
+                      "uint256",
+                      "uint256",
+                      "uint256",
+                      "uint256",
+                      "uint256",
+                      "bytes32",
+                    ],
+                    [
+                      req.from,
+                      req.to,
+                      req.token,
+                      req.txGas,
+                      req.tokenGasPrice,
+                      req.batchId,
+                      req.batchNonce,
+                      req.deadline,
+                      ethers.utils.keccak256(req.data),
+                    ]
+                  );
+
+                const sig = await accounts[0].signMessage(hashToSign);
+                const tx = await biconomyForwarder.executePersonalSign(req, sig);
+                const receipt = await tx.wait(confirmations = 1);
+                console.log(`gas used from receipt ${receipt.gasUsed.toNumber()}`);
+            });
+        });
+
+        describe("EIP712 Sign - Trusted Forwarder", function () {
+            it("Transfer BICO : Executes call successfully", async function () {
+                const addr5 = await accounts[5].getAddress();
+                const amount = ethers.BigNumber.from("50000000000000000000");
+                const req = await bicoToInteract.populateTransaction.transfer(addr5, amount.toString());
+                const batchId = 0;
+                const batchNonce = await biconomyForwarder.getNonce(firstHolder, batchId);
+                req.from = firstHolder;
+                req.batchId = batchId;
+                req.batchNonce = batchNonce.toNumber();
+                req.batchId = batchId;
+                req.txGas = req.gasLimit.toNumber();
+                req.tokenGasPrice = 0;
+                req.deadline = 0;
+                req.token = zero_address;
+                delete req.gasPrice;
+                delete req.gasLimit;
+                delete req.chainId;
+
+                const types = { ERC20ForwardRequest };
+                const signature = await accounts[0]._signTypedData(domainData, types, req);
+
+                const tx = await biconomyForwarder.executeEIP712(req, domainSeparator, signature);
+                const receipt = await tx.wait(confirmations = 1);
+                console.log(`gas used from receipt ${receipt.gasUsed.toNumber()}`);
+            });
+
+            it("Approve BICO : Executes call successfully", async function () {
+                const addr5 = await accounts[5].getAddress();
+                const amount = ethers.BigNumber.from("50000000000000000000");
+                const req = await bicoToInteract.populateTransaction.approve(addr5, amount.toString());
+                const batchId = 0;
+                const batchNonce = await biconomyForwarder.getNonce(firstHolder, batchId);
+                req.from = firstHolder;
+                req.batchId = batchId;
+                req.batchNonce = batchNonce.toNumber();
+                req.batchId = batchId;
+                req.txGas = req.gasLimit.toNumber();
+                req.tokenGasPrice = 0;
+                req.deadline = 0;
+                req.token = zero_address;
+                delete req.gasPrice;
+                delete req.gasLimit;
+                delete req.chainId;
+
+                const types = { ERC20ForwardRequest };
+                const signature = await accounts[0]._signTypedData(domainData, types, req);
+                
+                const tx = await biconomyForwarder.executeEIP712(req, domainSeparator, signature);
+                const receipt = await tx.wait(confirmations = 1);
+                console.log(`gas used from receipt ${receipt.gasUsed.toNumber()}`);
+            });
+
+            it("Updates nonces", async function () {
+                expect(
+                  await biconomyForwarder.getNonce(await accounts[0].getAddress(), 0)
+                ).to.equal(4);
+              });
+        });
+    });
 });
