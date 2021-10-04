@@ -147,7 +147,7 @@ describe("ERC20 :: BICO ", function () {
             const { v, r, s } = getSignatureParameters(signature);
 
             // Transfer 10 tokens from beneficiary to addr1 using signature
-            await bicoToInteract.connect(accounts[2]).transferWithSig(batchNonce, v, r, s, deadline, firstHolder, batchId, addr1, amount.toString());
+            await bicoToInteract.connect(accounts[2]).transferWithSig(v, r, s, deadline, firstHolder, batchId, addr1, amount.toString());
 
             const finalOwnerBalance = await bicoToInteract.balanceOf(firstHolder);
             expect(finalOwnerBalance).to.equal(initialOwnerBalance.sub(amount));
@@ -179,7 +179,7 @@ describe("ERC20 :: BICO ", function () {
             const { v, r, s } = getSignatureParameters(signature);
 
             // Approve 10 tokens from beneficiary to addr3 using signature
-            await bicoToInteract.connect(accounts[5]).approveWithSig(batchNonce, v, r, s, deadline, firstHolder, batchId, addr3, amount.toString());
+            await bicoToInteract.connect(accounts[5]).approveWithSig(v, r, s, deadline, firstHolder, batchId, addr3, amount.toString());
 
             const finalAllowance = await bicoToInteract.allowance(firstHolder,addr3);
             expect(finalAllowance).to.equal(initialAllowance.add(amount));
