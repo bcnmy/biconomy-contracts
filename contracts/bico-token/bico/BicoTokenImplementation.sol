@@ -592,13 +592,13 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     /**
      * @dev Initializes the contract
      */
-    function initialize(address beneficiary, address trustedForwarder) public initializer {
-       __BicoTokenImplementation_init_unchained();
+    function initialize(address beneficiary, address trustedForwarder, address governor, address accessControlAdmin, address pauser, address minter) public initializer {
+       __BicoTokenImplementation_init_unchained(accessControlAdmin,pauser,minter);
        _mint(beneficiary, 1000000000 * 10 ** decimals());
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
        __AccessControl_init();
-       __Governed_init(msg.sender);
+       __Governed_init(governor);
        __ReentrancyGuard_init();
        _initializedVersion = 0;
        mintingAllowedAfter = 0;
@@ -620,12 +620,12 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
 
     //review
     //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-    function __BicoTokenImplementation_init_unchained() internal initializer {
+    function __BicoTokenImplementation_init_unchained(address accessControlAdmin, address pauser, address minter) internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(PAUSER_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, accessControlAdmin);
+        _setupRole(PAUSER_ROLE, pauser);
+        _setupRole(MINTER_ROLE, minter);
 
         // EIP-712 domain separator
         DOMAIN_SEPARATOR = keccak256(

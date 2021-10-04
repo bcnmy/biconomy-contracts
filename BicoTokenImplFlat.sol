@@ -446,7 +446,7 @@ abstract contract PausableUpgradeable is Initializable {
      * - The contract must not be paused.
      */
     modifier whenNotPaused() {
-        require(!paused(), "Pausable: paused");
+        require(!paused(), "BICO:: Pausable: paused");
         _;
     }
 
@@ -458,7 +458,7 @@ abstract contract PausableUpgradeable is Initializable {
      * - The contract must be paused.
      */
     modifier whenPaused() {
-        require(paused(), "Pausable: not paused");
+        require(paused(), "BICO:: Pausable: not paused");
         _;
     }
 
@@ -530,7 +530,7 @@ abstract contract PausableUpgradeable is Initializable {
  */
 abstract contract AccessControlUpgradeable is Initializable, IAccessControlUpgradeable, ERC165Upgradeable {
     function __AccessControl_init() internal initializer {
-        __ERC165_init_unchained();
+        __ERC165_init();
         __AccessControl_init_unchained();
     }
 
@@ -586,7 +586,7 @@ abstract contract AccessControlUpgradeable is Initializable, IAccessControlUpgra
             revert(
                 string(
                     abi.encodePacked(
-                        "AccessControl: account ",
+                        "BICO:: AccessControl: account ",
                         StringsUpgradeable.toHexString(uint160(account), 20),
                         " is missing role ",
                         StringsUpgradeable.toHexString(uint256(role), 32)
@@ -648,7 +648,7 @@ abstract contract AccessControlUpgradeable is Initializable, IAccessControlUpgra
      * - the caller must be `account`.
      */
     function renounceRole(bytes32 role, address account) public virtual override {
-        require(account == msg.sender, "AccessControl: can only renounce roles for self");
+        require(account == msg.sender, "BICO:: AccessControl: can only renounce roles for self");
 
         _revokeRole(role, account);
     }
@@ -721,7 +721,7 @@ contract GovernedUpgradeable is Initializable {
      * @dev Check if the caller is the governor.
      */
     modifier onlyGovernor {
-        require(msg.sender == governor, "Only Governor can call");
+        require(msg.sender == governor, "BICO:: Only Governor can call");
         _;
     }
 
@@ -742,7 +742,7 @@ contract GovernedUpgradeable is Initializable {
      * @param _newGovernor Address of new `governor`
      */
     function transferOwnership(address _newGovernor) external onlyGovernor {
-        require(_newGovernor != address(0), "Governor must be set");
+        require(_newGovernor != address(0), "BICO:: Governor must be set");
 
         address oldPendingGovernor = pendingGovernor;
         pendingGovernor = _newGovernor;
@@ -798,7 +798,7 @@ library ECDSA {
     function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
         // Check the signature length
         if (signature.length != 65) {
-            revert("ECDSA: invalid signature length");
+            revert("BICO:: ECDSA: invalid signature length");
         }
 
         // Divide the signature in r, s and v variables
@@ -824,12 +824,12 @@ library ECDSA {
         // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
         // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
         // these malleable signatures as well.
-        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "ECDSA: invalid signature 's' value");
-        require(v == 27 || v == 28, "ECDSA: invalid signature 'v' value");
+        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "BICO:: ECDSA: invalid signature 's' value");
+        require(v == 27 || v == 28, "BICO:: ECDSA: invalid signature 'v' value");
 
         // If the signature is valid (and not malleable), return the signer address
         address signer = ecrecover(hash, v, r, s);
-        require(signer != address(0), "ECDSA: invalid signature");
+        require(signer != address(0), "BICO:: ECDSA: invalid signature");
 
         return signer;
     }
@@ -915,14 +915,14 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * Note that `_minimumTimeBetweenMints` may be zero. `actor` is msg.sender for this action.
      */
-    event MinimumTimeBetweenMintsChanged(uint32 _minimumTimeBetweenMints, address indexed actor);
+    event MinimumTimeBetweenMintsChanged(uint32 indexed _minimumTimeBetweenMints, address indexed actor);
 
     /**
      * @dev Emitted when mint cap is changed through governance
      *
      * Note that `_mintCap` may be zero. `actor` is msg.sender for this action.
      */
-    event MintCapChanged(uint8 _mintCap, address indexed actor);
+    event MintCapChanged(uint8 indexed _mintCap, address indexed actor);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -941,13 +941,13 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     /**
      * @dev Initializes the contract
      */
-    function initialize(address beneficiary, address trustedForwarder) public initializer {
-       __BicoTokenImplementation_init_unchained();
+    function initialize(address beneficiary, address trustedForwarder, address governor, address accessControlAdmin, address pauser, address minter) public initializer {
+       __BicoTokenImplementation_init_unchained(accessControlAdmin,pauser,minter);
        _mint(beneficiary, 1000000000 * 10 ** decimals());
        __ERC2771Context_init(trustedForwarder);
        __Pausable_init();
        __AccessControl_init();
-       __Governed_init(msg.sender);
+       __Governed_init(governor);
        __ReentrancyGuard_init();
        _initializedVersion = 0;
        mintingAllowedAfter = 0;
@@ -969,12 +969,12 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
 
     //review
     //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-    function __BicoTokenImplementation_init_unchained() internal initializer {
+    function __BicoTokenImplementation_init_unchained(address accessControlAdmin, address pauser, address minter) internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(PAUSER_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, accessControlAdmin);
+        _setupRole(PAUSER_ROLE, pauser);
+        _setupRole(MINTER_ROLE, minter);
 
         // EIP-712 domain separator
         DOMAIN_SEPARATOR = keccak256(
@@ -1105,7 +1105,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
-        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");  
+        require(currentAllowance >= amount, "BICO:: ERC20: transfer amount exceeds allowance");  
         unchecked {      
             _approve(sender, _msgSender(), currentAllowance - amount);
         }
@@ -1145,7 +1145,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual nonReentrant returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
-        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        require(currentAllowance >= subtractedValue, "BICO:: ERC20: decreased allowance below zero");
         unchecked {
             _approve(_msgSender(), spender, currentAllowance - subtractedValue);
         }
@@ -1171,13 +1171,13 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         address recipient,
         uint256 amount
     ) internal virtual {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
+        require(sender != address(0), "BICO:: ERC20: transfer from the zero address");
+        require(recipient != address(0), "BICO:: ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(sender, recipient, amount);
 
         uint256 senderBalance = _balances[sender];
-        require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+        require(senderBalance >= amount, "BICO:: ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[sender] = senderBalance - amount;
         }
@@ -1198,7 +1198,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `account` cannot be the zero address.
      */
     function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: mint to the zero address");
+        require(account != address(0), "BICO:: ERC20: mint to the zero address");
 
         _beforeTokenTransfer(address(0), account, amount);
 
@@ -1223,12 +1223,12 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
+        require(account != address(0), "BICO:: ERC20: burn from the zero address");
 
         _beforeTokenTransfer(account, address(0), amount);
 
         uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        require(accountBalance >= amount, "BICO:: ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] = accountBalance - amount;
         }
@@ -1257,8 +1257,8 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         address spender,
         uint256 amount
     ) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "BICO:: ERC20: approve from the zero address");
+        require(spender != address(0), "BICO:: ERC20: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
@@ -1322,14 +1322,12 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * @param _spender Address of the approved spender
      * @param _value Amount of tokens to approve the spender
      * @param _batchId Batch Id. pass this 0 if batching is not needed.
-     * @param _batchNonce Batch Nonce. Nonce for given Batch Id
      * @param _deadline Expiration time of the signed approval
      * @param _v Signature version
      * @param _r Signature r value
      * @param _s Signature s value
      */
     function approveWithSig(
-        uint256 _batchNonce,
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
@@ -1371,14 +1369,12 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * @param _recipient Address of the token recipient
      * @param _amount Amount of tokens to transfer
      * @param _batchId Batch Id. pass this 0 if batching is not needed.
-     * @param _batchNonce Batch Nonce. Nonce for given Batch Id
      * @param _deadline Expiration time of the signed approval
      * @param _v Signature version
      * @param _r Signature r value
      * @param _s Signature s value
      */
     function transferWithSig(
-        uint256 _batchNonce,        
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
@@ -1424,7 +1420,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
     }
 
     function setTrustedForwarder(address payable _forwarder) external onlyGovernor {
-        require(_forwarder != address(0), "Invalid address for new trusted forwarder");
+        require(_forwarder != address(0), "BICO:: Invalid address for new trusted forwarder");
         _trustedForwarder = _forwarder;
         emit TrustedForwarderChanged(_forwarder, msg.sender);
     }

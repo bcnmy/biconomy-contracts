@@ -16,6 +16,10 @@ async function main() {
   const beneficiary = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
   const trustedForwarder = "0xF82986F574803dfFd9609BE8b9c7B92f63a1410E";
   const proxyAdmin = "0x61943A66606e6442441fF1483080e7fB10558C91";
+  const accessControlAdmin = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
+  const pauser = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
+  const minter = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
+  const governor = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
 
   let tx, receipt;
   let totalGasUsed = 0;
@@ -31,7 +35,7 @@ async function main() {
   console.log("Biconomy Token Proxy Contract deployed at:", bicoProxy.address);
 
   let bicoTokenProxy = await hre.ethers.getContractAt("contracts/bico-token/bico/BicoTokenImplementation.sol:BicoTokenImplementation", bicoProxy.address);
-  tx = await bicoTokenProxy.initialize(beneficiary,trustedForwarder);
+  tx = await bicoTokenProxy.initialize(beneficiary,trustedForwarder,governor,accessControlAdmin,pauser,minter);
   receipt = await tx.wait(confirmations = 2);
   console.log(`Gas used : ${receipt.gasUsed.toNumber()}`);
   //totalGasUsed = totalGasUsed + receipt.gasUsed.toNumber();

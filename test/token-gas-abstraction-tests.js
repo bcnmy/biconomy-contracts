@@ -60,6 +60,12 @@ describe("ERC20 :: BICO ", function () {
         accounts = await ethers.getSigners();
         firstHolder = await accounts[0].getAddress();
 
+        const admin = await accounts[7].getAddress();
+        const governor = await accounts[9].getAddress();
+        const accessControlAdmin = await accounts[10].getAddress();
+        const pauser = await accounts[11].getAddress();
+        const minter = await accounts[12].getAddress();
+
         const Forwarder = await ethers.getContractFactory("BiconomyForwarder");
         biconomyForwarder = await Forwarder.deploy(await accounts[0].getAddress());
         await biconomyForwarder.deployed();
@@ -109,7 +115,11 @@ describe("ERC20 :: BICO ", function () {
 
         await bicoToInteract.initialize(
             await accounts[0].getAddress(),
-            biconomyForwarder.address  // trusted forwarder for the current network. otherwise use default value
+            biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
+            governor,
+            accessControlAdmin,
+            pauser,
+            minter
         );
 
         tokenDomainData = {
