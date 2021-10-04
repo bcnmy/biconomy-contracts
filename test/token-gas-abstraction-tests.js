@@ -64,11 +64,6 @@ describe("ERC20 :: BICO ", function () {
         biconomyForwarder = await Forwarder.deploy(await accounts[0].getAddress());
         await biconomyForwarder.deployed();
 
-
-        //TODO
-        //Review domain data and domain seperator for biconomy forwarder
-        //Review domain data for biconomy token gasless methods and registered domain seperator
-
         domainData = {
             name: "BiconomyForwarder",
             version: "1",

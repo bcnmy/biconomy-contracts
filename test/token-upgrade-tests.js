@@ -11,6 +11,8 @@ describe("ERC20 :: BICO ", function () {
     let bicoToInteract;
     let biconomyForwarder;
     let firstHolder;
+    let bicoTokenV1; //upgraded contract
+    let newBicoToInteract;
 
     let domainType = [
         { name: "name", type: "string" },
@@ -91,10 +93,22 @@ describe("ERC20 :: BICO ", function () {
             await accounts[0].getAddress(),
             biconomyForwarder.address  // trusted forwarder for the current network. otherwise use default value
         );
+
+        //Deploying new logic contract
+        const BicoTokenV1 = await ethers.getContractFactory("BicoTokenV1");
+        bicoTokenV1 = await BicoTokenV1.deploy();
+        await bicoTokenV1.deployed();
+
+        newBicoToInteract = await ethers.getContractAt(
+            "contracts/bico-token/bico/BicoTokenV1.sol:BicoTokenV1",
+            bicoTokenProxy.address
+        );
+
+        
     });
 
     describe("Token storage reads checks", function () {
-        it("Should be able to read state variables through view methods as expected values", async function () {
+        it("Should be able to read state variables through view methods as expected values before and after Upgrade", async function () {
             const name = "Biconomy Token";
             const trustedForwarder = biconomyForwarder.address;
             const beneficiary = await accounts[0].getAddress();
@@ -103,60 +117,30 @@ describe("ERC20 :: BICO ", function () {
             expect(await bicoToInteract.isTrustedForwarder(trustedForwarder)).to.equal(true);
             expect((await bicoToInteract.balanceOf(beneficiary)).toString()).to.equal(beneficiaryBalance);
             expect(await bicoToInteract.totalSupply()).to.equal(beneficiaryBalance);
-        });
-    });
 
-    describe("Transactions", function () {
-        it("Should transfer tokens between accounts", async function () {
-            const addr1 = await accounts[1].getAddress();
-            const addr2 = await accounts[2].getAddress();
-
-            // Transfer 50 tokens from beneficiary to addr1
-            await bicoToInteract.transfer(addr1, ethers.BigNumber.from("50000000000000000000"));
-            expect(await bicoToInteract.balanceOf(addr1)).to.equal(ethers.BigNumber.from("50000000000000000000"));
-
-            // Transfer 50 tokens from addr1 to addr2
-            await bicoToInteract.connect(accounts[1]).transfer(addr2, ethers.BigNumber.from("50000000000000000000"));
-            expect(await bicoToInteract.balanceOf(addr2)).to.equal(ethers.BigNumber.from("50000000000000000000"));
-        });
-
-        it("Should fail if sender doesn’t have enough tokens", async function () {
-            const beneficiary = await accounts[0].getAddress();
-            const initialOwnerBalance = await bicoToInteract.balanceOf(beneficiary);
-            const beneficiaryBalance = "999999950000000000000000000";
-
-            // Try to send 1 token from addr1 (0 tokens) to owner (1000000 tokens).
-            // `require` will evaluate false and revert the transaction.
-            await expect(
-                bicoToInteract.connect(accounts[1]).transfer(beneficiary, ethers.BigNumber.from("1000000000000000000"))
-            ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-
-            // Owner balance shouldn't have changed.
-            expect(await bicoToInteract.balanceOf(beneficiary)).to.equal(
-                beneficiaryBalance
-            );
-        });
-
-        it("Should update balances after transfers", async function () {
             const initialOwnerBalance = await bicoToInteract.balanceOf(firstHolder);
             const addr3 = await accounts[3].getAddress();
             const addr4 = await accounts[4].getAddress();
             // Transfer 100 tokens from owner to addr3.
             await bicoToInteract.transfer(addr3, ethers.BigNumber.from("100000000000000000000"));
-      
+
+            
+            // Admin to update implementation address
+            await bicoTokenProxy.connect(accounts[7]).upgradeTo(bicoTokenV1.address);
+
+            // Initialize new logic contract
+            await newBicoToInteract.initializeV1();
+
             // Transfer another 50 tokens from owner to addr4.
-            await bicoToInteract.transfer(addr4, ethers.BigNumber.from("50000000000000000000"));
-      
-            // Check balances.
-            const finalOwnerBalance = await bicoToInteract.balanceOf(firstHolder);
+            await newBicoToInteract.transfer(addr4, ethers.BigNumber.from("50000000000000000000"));
+
+            expect(await newBicoToInteract.name()).to.equal(name);
+            expect(await newBicoToInteract.isTrustedForwarder(trustedForwarder)).to.equal(true);
+
+            const finalOwnerBalance = await newBicoToInteract.balanceOf(firstHolder);
             expect(finalOwnerBalance).to.equal(initialOwnerBalance.sub(ethers.BigNumber.from("150000000000000000000")));
-      
-            const addr3Balance = await bicoToInteract.balanceOf(addr3);
-            expect(addr3Balance).to.equal(ethers.BigNumber.from("100000000000000000000"));
-      
-            const addr4Balance = await bicoToInteract.balanceOf(addr4);
-            expect(addr4Balance).to.equal(ethers.BigNumber.from("50000000000000000000"));
-          });
+
+        });
     });
 
 });
