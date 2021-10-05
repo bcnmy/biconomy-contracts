@@ -104,6 +104,9 @@ describe("ERC20 :: BICO ", function () {
     describe("Token storage reads checks", function () {
         
         it("Upgrades to actual V0 implementation and initializes", async function() {
+
+            const logicBefore = await bicoTokenProxy.getImplementation();
+            expect(logicBefore).to.equal(bicoNada.address);
             const req = await bicoToInteract.populateTransaction.initialize(
                 await accounts[0].getAddress(),
                 biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
