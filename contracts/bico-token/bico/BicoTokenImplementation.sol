@@ -713,7 +713,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual nonReentrant returns (bool) {
+    function approve(address spender, uint256 amount) public virtual nonReentrant whenNotPaused returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -775,7 +775,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual nonReentrant returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public virtual nonReentrant whenNotPaused returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
         return true;
     }
@@ -794,7 +794,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual nonReentrant returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual nonReentrant whenNotPaused returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(currentAllowance >= subtractedValue, "BICO:: ERC20: decreased allowance below zero");
         unchecked {
@@ -987,7 +987,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         uint256 _batchId,
         address _spender,
         uint256 _value
-    ) public virtual nonReentrant {
+    ) public virtual nonReentrant whenNotPaused {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
