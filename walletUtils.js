@@ -3,7 +3,7 @@ const ethers = require("ethers");
 const fs = require('fs');
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 
-const makeKeyList = (num=1,mn=mnemonic,index=0,path="m/44'/60'/0'/0/") => {
+const makeKeyList = (num=2,mn=mnemonic,index=0,path="m/44'/60'/0'/0/") => {
   let accounts = [];
   for(i=0; i<num; i++){
     accounts.push(ethers.Wallet.fromMnemonic(mn,path+i).privateKey);

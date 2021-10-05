@@ -15,16 +15,20 @@ async function main() {
     // If this script is run directly using `node` you may want to call compile
     // manually to make sure everything is compiled
     // await hre.run('compile');
+    const accounts = await ethers.getSigners();
+
+    // Make sure below admin keys/roles are different and preferably multisig addresses
     const beneficiary = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
-    //@notice
-    //Make sure to use trusted forwarder for Ethereum Mainnet here
-    //Make sure below admin keys/roles are different and preferably multisig addresses
     const trustedForwarder = "0xF82986F574803dfFd9609BE8b9c7B92f63a1410E";
-    const proxyAdmin = "0x61943A66606e6442441fF1483080e7fB10558C91";
+    const proxyAdmin = "0x61943A66606e6442441fF1483080e7fB10558C91"; // accounts[1]
     const accessControlAdmin = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
     const pauser = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
     const minter = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
     const governor = "0x2b241cBe6B455e08Ade78a7ccC42DE2403d7b566";
+
+    //Provide proxy address if already deployed and replace bicoProxy.address with proxyAddress below
+    //Also remove first two deployment blobs for already deployed proxy with dummy logic 
+    const proxyAddress = "0xEf2E078a649aAd3908b7F4f9aD75A881D4f3b7e3";
 
     let tx, receipt;
     let totalGasUsed = 0;
@@ -32,26 +36,39 @@ async function main() {
     var gasPrices = await estimateGasPrice();
     var options = { gasPrice: gasPrices.fastGasPriceInWei, gasLimit: 10000000 };
 
-    const BicoToken = await hre.ethers.getContractFactory("BicoTokenImplementation");
-    const bico = await BicoToken.deploy(options);
-    await bico.deployed();
-    console.log("✅ Biconomy Token Logic Contract deployed at:", bico.address);
-    receipt = await bico.deployTransaction.wait(confirmations = 2);
+    const BicoTokenEmpty = await hre.ethers.getContractFactory("BicoTokenNada");
+    const bicoEmpty = await BicoTokenEmpty.deploy(options);
+    await bicoEmpty.deployed();
+    console.log("✅ Biconomy Token Empty Logic Contract deployed at:", bicoEmpty.address);
+    receipt = await bicoEmpty.deployTransaction.wait(confirmations = 2);
     console.log(`Gas used : ${receipt.gasUsed.toNumber()}`);
     totalGasUsed = totalGasUsed + receipt.gasUsed.toNumber();
 
     const BicoTokenProxy = await hre.ethers.getContractFactory("BicoTokenProxy");
-    const bicoProxy = await BicoTokenProxy.deploy(bico.address, proxyAdmin, options);
+    const bicoProxy = await BicoTokenProxy.deploy(bicoEmpty.address, proxyAdmin, options);
     await bicoProxy.deployed();
     console.log("✅ Biconomy Token Proxy Contract deployed at:", bicoProxy.address);
     receipt = await bicoProxy.deployTransaction.wait(confirmations = 2);
     console.log(`Gas used : ${receipt.gasUsed.toNumber()}`);
     totalGasUsed = totalGasUsed + receipt.gasUsed.toNumber();
 
+    const BicoToken = await hre.ethers.getContractFactory("BicoTokenImplementation");
+    const bico = await BicoToken.deploy(options);
+    await bico.deployed();
+    console.log("✅ Biconomy Token Actual Logic Contract V0 deployed at:", bico.address);
+    receipt = await bico.deployTransaction.wait(confirmations = 2);
+    console.log(`Gas used : ${receipt.gasUsed.toNumber()}`);
+    totalGasUsed = totalGasUsed + receipt.gasUsed.toNumber();
+
+    let bicoProxyNew = await hre.ethers.getContractAt("contracts/bico-token/bico/BicoTokenProxy.sol:BicoTokenProxy", bicoProxy.address);
+
     let bicoTokenProxy = await hre.ethers.getContractAt("contracts/bico-token/bico/BicoTokenImplementation.sol:BicoTokenImplementation", bicoProxy.address);
-    tx = await bicoTokenProxy.initialize(beneficiary, trustedForwarder, governor, accessControlAdmin, pauser, minter, options);
+    const req = await bicoTokenProxy.connect(accounts[1]).populateTransaction.initialize(beneficiary, trustedForwarder, governor, accessControlAdmin, pauser, minter);
+    console.log(req.data);
+
+    tx = await bicoProxyNew.connect(accounts[1]).upgradeToAndCall(bico.address,req.data);
     receipt = await tx.wait(confirmations = 2);
-    console.log("✅ Proxy initialized");
+    console.log("✅ Proxy:: implementation updated and initialized");
     console.log(`Gas used : ${receipt.gasUsed.toNumber()}`);
     console.log(`Initializer:  ${receipt.from}`);
     totalGasUsed = totalGasUsed + receipt.gasUsed.toNumber();
