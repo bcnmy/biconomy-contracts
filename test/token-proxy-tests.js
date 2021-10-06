@@ -142,6 +142,23 @@ describe("ERC20 :: BICO ", function () {
             await expect(bicoTokenProxy.connect(accounts[7]).upgradeTo(addr2)).to.be.revertedWith("ERC1967: new implementation is not a contract");
         });
 
+        it("Admin should be able to transfer ownership to another EOA", async function () {
+            const addr1 = await accounts[1].getAddress();
+            const addr2 = await accounts[2].getAddress();
+            const addr16 = await accounts[16].getAddress();
+
+            await bicoTokenProxy.connect(accounts[7]).changeAdmin(addr16);
+            expect(await bicoTokenProxy.getAdmin()).to.equal(addr16);
+        });
+
+        it("New admin should be able to transfer ownership to another contract(multisig)", async function () {
+            const addr1 = await accounts[1].getAddress();
+            const addr2 = await accounts[2].getAddress();
+
+            await bicoTokenProxy.connect(accounts[16]).changeAdmin(bicoNada.address); //ideally multisig deployed address
+            expect(await bicoTokenProxy.getAdmin()).to.equal(bicoNada.address);
+        });
+
     });
 
 });
