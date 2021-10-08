@@ -1,10 +1,10 @@
-// Sources flattened with hardhat v2.6.4 https://hardhat.org
+// Sources flattened with hardhat v2.6.5 https://hardhat.org
 
 // File @openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol@v4.3.2
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.4;
 
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
@@ -54,7 +54,7 @@ abstract contract Initializable {
 
 
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
@@ -125,7 +125,7 @@ abstract contract ReentrancyGuardUpgradeable is Initializable {
 
 
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev External interface of AccessControl declared to support ERC165 detection.
@@ -216,7 +216,7 @@ interface IAccessControlUpgradeable {
 
 
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev String operations.
@@ -286,7 +286,7 @@ library StringsUpgradeable {
 
 
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -314,7 +314,7 @@ interface IERC165Upgradeable {
 
 
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -351,7 +351,7 @@ abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
 // File contracts/bico-token/bico/BicoTokenImplementation.sol
 
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.4;
 
 
 /**
@@ -955,20 +955,6 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        mintCap = 2;
     }
     
-    /*
-    //review the need for this method + refer to openzeppelin upgrade safe doc again regarding inits
-    //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-    function __BicoTokenImplementation_init(address trustedForwarder) internal initializer {
-       __ERC2771Context_init(trustedForwarder);
-       __Pausable_init();
-       __AccessControl_init();
-       __Governed_init(msg.sender);
-       __BicoTokenImplementation_init_unchained();
-    }
-    */
-
-    //review
-    //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
     function __BicoTokenImplementation_init_unchained(address accessControlAdmin, address pauser, address minter) internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
@@ -1062,27 +1048,10 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual nonReentrant returns (bool) {
+    function approve(address spender, uint256 amount) public virtual nonReentrant whenNotPaused returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
-
-    /*
-    ///TODO
-    ///review the need for this feature and how to securely implement it without breaking changes
-    ///Write test cases
-    /// @notice approve `target` to spend `amount` and call it with data.
-    /// @param target address to be given rights to transfer and destination of the call.
-    /// @param amount the number of tokens allowed.
-    /// @param data bytes for the call.
-    /// @return data of the call.
-    function approveAndCall(
-        address target,
-        uint256 amount,
-        bytes calldata data
-    ) external payable returns (bytes memory) {
-    }*/
-
 
     /**
      * @dev See {IERC20-transferFrom}.
@@ -1124,7 +1093,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual nonReentrant returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public virtual nonReentrant whenNotPaused returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
         return true;
     }
@@ -1143,7 +1112,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual nonReentrant returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual nonReentrant whenNotPaused returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(currentAllowance >= subtractedValue, "BICO:: ERC20: decreased allowance below zero");
         unchecked {
@@ -1336,7 +1305,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         uint256 _batchId,
         address _spender,
         uint256 _value
-    ) public virtual nonReentrant {
+    ) public virtual nonReentrant whenNotPaused {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
