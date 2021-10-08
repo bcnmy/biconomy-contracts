@@ -606,20 +606,6 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
        mintCap = 2;
     }
     
-    /*
-    //review the need for this method + refer to openzeppelin upgrade safe doc again regarding inits
-    //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-    function __BicoTokenImplementation_init(address trustedForwarder) internal initializer {
-       __ERC2771Context_init(trustedForwarder);
-       __Pausable_init();
-       __AccessControl_init();
-       __Governed_init(msg.sender);
-       __BicoTokenImplementation_init_unchained();
-    }
-    */
-
-    //review
-    //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
     function __BicoTokenImplementation_init_unchained(address accessControlAdmin, address pauser, address minter) internal initializer {
         _name = "Biconomy Token";
         _symbol = "BICO";
@@ -717,23 +703,6 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         _approve(_msgSender(), spender, amount);
         return true;
     }
-
-    /*
-    ///TODO
-    ///review the need for this feature and how to securely implement it without breaking changes
-    ///Write test cases
-    /// @notice approve `target` to spend `amount` and call it with data.
-    /// @param target address to be given rights to transfer and destination of the call.
-    /// @param amount the number of tokens allowed.
-    /// @param data bytes for the call.
-    /// @return data of the call.
-    function approveAndCall(
-        address target,
-        uint256 amount,
-        bytes calldata data
-    ) external payable returns (bytes memory) {
-    }*/
-
 
     /**
      * @dev See {IERC20-transferFrom}.
