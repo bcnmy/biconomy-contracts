@@ -76,4 +76,6 @@ contracts/SignatureVerify.sol
 cache
 artifacts
 .vscode
+coverage*
+.solcover.js
 
