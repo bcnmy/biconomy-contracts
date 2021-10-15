@@ -207,6 +207,21 @@ describe("ERC20 :: BICO ", function () {
             //Role revoked for addr6
             await bicoToInteract.connect(accounts[10]).revokeRole(PAUSER_ROLE,addr6);
         });
+
+        it("only Governor can set mint config", async function () {
+            const newMintCap = 3; //only integer % 
+            await bicoToInteract.connect(accounts[9]).setMintCap(newMintCap);
+        });
+
+        it("only Governor can set mint config", async function () {
+            const mintingAllowedAfter = 1634273009000;  
+            await bicoToInteract.connect(accounts[9]).setMintingAllowedAfter(mintingAllowedAfter);
+        });
+
+        it("Unauthorized account can not set mint config", async function () {
+            const newMinimumTimeBetweenMints = 3650000; 
+            await expect(bicoToInteract.setMinimumTimeBetweenMints(newMinimumTimeBetweenMints)).to.be.revertedWith("Only Governor can call");
+        });
     });
 
 });
