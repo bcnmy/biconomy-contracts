@@ -850,7 +850,6 @@ library ECDSA {
 }
 
 
-//review
 contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, PausableUpgradeable, AccessControlUpgradeable, GovernedUpgradeable, ReentrancyGuardUpgradeable {
     // -- State ERC20--
     mapping(address => uint256) private _balances;
@@ -1172,8 +1171,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
         emit Transfer(address(0), account, amount);
     }
 
-    //review
-    //there is no public burn() method. Do we need to make tokens burnable?
+    //there is no public burn() method in V0
     /**
      * @dev Destroys `amount` tokens from `account`, reducing the
      * total supply.
