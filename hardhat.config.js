@@ -130,6 +130,12 @@ module.exports = {
       accounts:walletUtils.makeKeyList(),
       chainId:42,
     },
+    rinkeby:{
+      //url:`https://kovan.infura.io/v3/${infuraKey}`,
+      url:`https://eth-rinkeby.alchemyapi.io/v2/${alchemyKey}`,
+      accounts:walletUtils.makeKeyList(),
+      chainId:4,
+    },
     mainnet:{
       //url:`https://mainnet.infura.io/v3/${infuraKey}`,
       url:`https://eth-mainnet.alchemyapi.io/v2/${alchemyKey}`,
