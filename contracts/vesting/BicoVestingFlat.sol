@@ -1038,7 +1038,7 @@ abstract contract AccessProtected is Context, Ownable {
 }
 
 
-// File src/vesting/D11Vesting.sol
+// File src/vesting/BicoVesting.sol
 
 
 pragma solidity 0.7.6;
@@ -1048,7 +1048,7 @@ pragma abicoder v2;
 
 
 
-contract D11Vesting is AccessProtected, Pausable {
+contract BicoVesting is AccessProtected, Pausable {
     using SafeMath for uint256;
     using Address for address;
     address public tokenAddress;
