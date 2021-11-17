@@ -1,13 +1,10 @@
-// SPDX-License-Identifier: MIT
-pragma solidity 0.7.6;
-
-
-// Sources flattened with hardhat v2.6.6 https://hardhat.org
+// Sources flattened with hardhat v2.6.8 https://hardhat.org
 
 // File @openzeppelin/contracts/utils/Context.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
+pragma solidity >=0.6.0 <0.8.0;
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -33,9 +30,9 @@ abstract contract Context {
 
 // File @openzeppelin/contracts/token/ERC20/IERC20.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
-
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -114,9 +111,9 @@ interface IERC20 {
 
 // File @openzeppelin/contracts/math/SafeMath.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
-
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -332,9 +329,9 @@ library SafeMath {
 
 // File @openzeppelin/contracts/token/ERC20/ERC20.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
-
+pragma solidity >=0.6.0 <0.8.0;
 
 
 
@@ -640,9 +637,9 @@ contract ERC20 is Context, IERC20 {
 
 // File @openzeppelin/contracts/utils/Address.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
-
+pragma solidity >=0.6.2 <0.8.0;
 
 /**
  * @dev Collection of functions related to the address type
@@ -833,9 +830,9 @@ library Address {
 
 // File @openzeppelin/contracts/utils/Pausable.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
-
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -925,9 +922,9 @@ abstract contract Pausable is Context {
 
 // File @openzeppelin/contracts/access/Ownable.sol@v3.4.2
 
+// SPDX-License-Identifier: MIT
 
-
-
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -996,7 +993,8 @@ abstract contract Ownable is Context {
 
 // File src/utils/AccessProtected.sol
 
-
+// SPDX-License-Identifier: MIT
+pragma solidity 0.7.6;
 
 
 abstract contract AccessProtected is Context, Ownable {
@@ -1040,7 +1038,7 @@ abstract contract AccessProtected is Context, Ownable {
 
 // File src/vesting/BicoVesting.sol
 
-
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
@@ -1055,7 +1053,9 @@ contract BicoVesting is AccessProtected, Pausable {
 
     struct Claim {
         bool isActive;
-        uint256 totalAmount;
+        uint256 vestAmount;
+        uint256 unlockAmount;
+        uint256 unlockTime;
         uint256 startTime;
         uint256 endTime;
         uint256 amountClaimed;
@@ -1066,11 +1066,14 @@ contract BicoVesting is AccessProtected, Pausable {
     event ClaimCreated(
         address _creator,
         address _beneficiary,
-        uint256 _totalAmount,
+        uint256 _vestAmount,
+        uint256 _unlockAmount,
+        uint256 _unlockTime,
         uint256 _startTime,
         uint256 _endTime
     );
     event Claimed(address _beneficiary, uint256 _amount);
+    event Revoked(address _beneficiary);
 
     constructor(address _tokenAddress) {
         tokenAddress = _tokenAddress;
@@ -1078,27 +1081,31 @@ contract BicoVesting is AccessProtected, Pausable {
 
     function createClaim(
         address _beneficiary,
-        uint256 _totalAmount,
+        uint256 _vestAmount,
+        uint256 _unlockAmount,
+        uint256 _unlockTime,
         uint64 _startTime,
         uint64 _endTime
     ) public onlyAdmin {
         require(!claims[_beneficiary].isActive, "CLAIM_ACTIVE");
         require(_endTime >= _startTime, "INVALID_TIME");
         require(_beneficiary != address(0), "INVALID_ADDRESS");
-        require(_totalAmount > 0, "INVALID_AMOUNT");
+        require(_vestAmount > 0, "INVALID_AMOUNT");
         require(
             ERC20(tokenAddress).allowance(msg.sender, address(this)) >=
-                _totalAmount,
+                (_vestAmount.add(_unlockAmount)),
             "INVALID_ALLOWANCE"
         );
         ERC20(tokenAddress).transferFrom(
             msg.sender,
             address(this),
-            _totalAmount
+            _vestAmount
         );
         Claim memory newClaim = Claim({
             isActive: true,
-            totalAmount: _totalAmount,
+            vestAmount: _vestAmount,
+            unlockAmount: _unlockAmount,
+            unlockTime: _unlockTime,
             startTime: _startTime,
             endTime: _endTime,
             amountClaimed: 0
@@ -1107,7 +1114,9 @@ contract BicoVesting is AccessProtected, Pausable {
         emit ClaimCreated(
             msg.sender,
             _beneficiary,
-            _totalAmount,
+            _vestAmount,
+            _unlockAmount,
+            _unlockTime,
             _startTime,
             _endTime
         );
@@ -1115,13 +1124,17 @@ contract BicoVesting is AccessProtected, Pausable {
 
     function createBatchClaim(
         address[] memory _beneficiaries,
-        uint256[] memory _totalAmounts,
+        uint256[] memory _vestAmounts,
+        uint256[] memory _unlockAmounts,
+        uint256[] memory _unlockTimes,
         uint64[] memory _startTimes,
         uint64[] memory _endTimes
     ) external onlyAdmin {
         uint256 length = _beneficiaries.length;
         require(
-            _totalAmounts.length == length &&
+            _vestAmounts.length == length &&
+                _unlockAmounts.length == length &&
+                _unlockTimes.length == length &&
                 _startTimes.length == length &&
                 _endTimes.length == length,
             "LENGTH_MISMATCH"
@@ -1129,7 +1142,9 @@ contract BicoVesting is AccessProtected, Pausable {
         for (uint256 i; i < length; i++) {
             createClaim(
                 _beneficiaries[i],
-                _totalAmounts[i],
+                _vestAmounts[i],
+                _unlockAmounts[i],
+                _unlockTimes[i],
                 _startTimes[i],
                 _endTimes[i]
             );
@@ -1151,8 +1166,11 @@ contract BicoVesting is AccessProtected, Pausable {
         returns (uint256)
     {
         Claim memory _claim = claims[beneficiary];
-        if (block.timestamp < _claim.startTime) return 0;
-        if (_claim.amountClaimed == _claim.totalAmount) return 0;
+        if (
+            block.timestamp < _claim.startTime &&
+            block.timestamp < _claim.unlockTime
+        ) return 0;
+        if (_claim.amountClaimed == _claim.vestAmount) return 0;
         uint256 currentTimestamp = block.timestamp > _claim.endTime
             ? _claim.endTime
             : block.timestamp;
@@ -1160,8 +1178,17 @@ contract BicoVesting is AccessProtected, Pausable {
             .sub(_claim.startTime)
             .mul(1e18)
             .div(_claim.endTime.sub(_claim.startTime));
-        uint256 claimAmount = _claim.totalAmount.mul(claimPercent).div(1e18);
-        uint256 unclaimedAmount = claimAmount.sub(_claim.amountClaimed);
+        uint256 claimAmount;
+        uint256 unclaimedAmount;
+        if (_claim.unlockTime <= block.timestamp) {
+            claimAmount = _claim.vestAmount.mul(claimPercent).div(1e18).add(
+                _claim.unlockAmount
+            );
+            unclaimedAmount = claimAmount.sub(_claim.amountClaimed);
+        } else {
+            claimAmount = _claim.vestAmount.mul(claimPercent).div(1e18);
+            unclaimedAmount = claimAmount.sub(_claim.amountClaimed);
+        }
         return unclaimedAmount;
     }
 
@@ -1172,13 +1199,14 @@ contract BicoVesting is AccessProtected, Pausable {
         uint256 unclaimedAmount = claimableAmount(beneficiary);
         ERC20(tokenAddress).transfer(beneficiary, unclaimedAmount);
         _claim.amountClaimed = _claim.amountClaimed + unclaimedAmount;
-        if (_claim.amountClaimed == _claim.totalAmount) _claim.isActive = false;
+        if (_claim.amountClaimed == _claim.vestAmount) _claim.isActive = false;
         claims[beneficiary] = _claim;
         emit Claimed(beneficiary, unclaimedAmount);
     }
 
     function revoke(address beneficiary) external onlyAdmin {
         claims[beneficiary].isActive = false;
+        emit Revoked(beneficiary);
     }
 
     function withdrawTokens(address wallet, uint256 amount) external onlyOwner {
