@@ -4,6 +4,7 @@
 
 // SPDX-License-Identifier: MIT
 
+
 pragma solidity >=0.6.0 <0.8.0;
 
 /*
@@ -1174,19 +1175,31 @@ contract BicoVesting is AccessProtected, Pausable {
         uint256 currentTimestamp = block.timestamp > _claim.endTime
             ? _claim.endTime
             : block.timestamp;
-        uint256 claimPercent = currentTimestamp
-            .sub(_claim.startTime)
-            .mul(1e18)
-            .div(_claim.endTime.sub(_claim.startTime));
+        uint256 claimPercent;
         uint256 claimAmount;
         uint256 unclaimedAmount;
-        if (_claim.unlockTime <= block.timestamp) {
+        if (
+            _claim.unlockTime <= block.timestamp &&
+            _claim.startTime <= block.timestamp
+        ) {
+            claimPercent = currentTimestamp.sub(_claim.startTime).mul(1e18).div(
+                    _claim.endTime.sub(_claim.startTime)
+                );
             claimAmount = _claim.vestAmount.mul(claimPercent).div(1e18).add(
                 _claim.unlockAmount
             );
             unclaimedAmount = claimAmount.sub(_claim.amountClaimed);
-        } else {
+        } else if (
+            _claim.unlockTime > block.timestamp &&
+            _claim.startTime <= block.timestamp
+        ) {
+            claimPercent = currentTimestamp.sub(_claim.startTime).mul(1e18).div(
+                    _claim.endTime.sub(_claim.startTime)
+                );
             claimAmount = _claim.vestAmount.mul(claimPercent).div(1e18);
+            unclaimedAmount = claimAmount.sub(_claim.amountClaimed);
+        } else {
+            claimAmount = _claim.unlockAmount;
             unclaimedAmount = claimAmount.sub(_claim.amountClaimed);
         }
         return unclaimedAmount;
