@@ -126,7 +126,8 @@ module.exports = {
       initialBaseFeePerGas: 0, // workaround from https://github.com/sc-forks/solidity-coverage/issues/652#issuecomment-896330136 . Remove when that issue is closed.
     },
     ropsten: {
-      url:`https://ropsten.infura.io/v3/${infuraKey}`,
+      //url:`https://ropsten.infura.io/v3/${infuraKey}`,
+      url:`https://eth-rinkeby.alchemyapi.io/v2/${alchemyKey}`,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : walletUtils.makeKeyList(),
     },
