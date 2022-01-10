@@ -2,8 +2,8 @@ const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const chaiBN = require('chai-bn');
 const { ethers } = require("hardhat");
-const {BN} = require('bn.js');
-const { defaultAbiCoder } = require('ethers/utils/abi-coder');
+// const {BN} = require('bn.js');
+const { defaultAbiCoder } = ethers.utils;
 const logDecoder = require('../helper/log-decoder.js');
 
 chai
