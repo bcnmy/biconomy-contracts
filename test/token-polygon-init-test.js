@@ -1,4 +1,5 @@
 const chai = require('chai');
+const { expect } = require("chai");
 const chaiAsPromised = require('chai-as-promised');
 const chaiBN = require('chai-bn');
 const { ethers } = require("hardhat");
@@ -25,8 +26,6 @@ describe("ERC20 :: BICO ", function () {
     let pauser;
     let minter;
     let childChainManager;
-    let depositTx;
-    let withdrawTx;
 
     before(async function () {
         accounts = await ethers.getSigners();
@@ -37,7 +36,7 @@ describe("ERC20 :: BICO ", function () {
         accessControlAdmin = await accounts[10].getAddress();
         pauser = await accounts[11].getAddress();
         minter = await accounts[12].getAddress();
-        childChainManager = await accounts[13].getAddress();
+        childChainManager = await accounts[12].getAddress();
 
         const Forwarder = await ethers.getContractFactory("BiconomyForwarder");
         biconomyForwarder = await Forwarder.deploy(firstHolder);
@@ -49,14 +48,12 @@ describe("ERC20 :: BICO ", function () {
         const PolyBicoImplementation = await ethers.getContractFactory("PolygonBicoToken");
         polyBicoToken = await PolyBicoImplementation.deploy();
         await polyBicoToken.deployed();
-        console.log("polyBicoToken address" + polyBicoToken.address);
 
         const BicoProxy = await hre.ethers.getContractFactory("BicoTokenProxy");
         bicoTokenProxy = await BicoProxy.deploy(
             polyBicoToken.address, admin  // admin address
         );
         await bicoTokenProxy.deployed();
-        console.log("bicoTokenProxy address" + bicoTokenProxy.address);
 
         bicoToInteract = await ethers.getContractAt(
             "contracts/bico-token/bico/PolygonBicoToken.sol:PolygonBicoToken",
@@ -79,25 +76,32 @@ describe("ERC20 :: BICO ", function () {
             const depositReceiver = "0xcfb14dD525b407e6123EE3C88B7aB20963892a66";
             const depositData = defaultAbiCoder.encode(['uint256'], ["100000000000000000"]);
             
-            depositTx = await bicoToInteract.deposit(depositReceiver, depositData);
-            should.exist(depositTx);
+            let depositTx = await bicoToInteract.connect(accounts[12]).deposit(depositReceiver, depositData);
+            let receipt = await ethers.provider.getTransactionReceipt(depositTx.hash);
+            
+            expect(receipt).to.be.ok;
         });
 
-        it('Should emit Transfer log', () => {
-            const logs = logDecoder.decodeLogs(depositTx.receipt.rawLogs);
-            transferLog = logs.find(l => l.event === 'Transfer');
-            should.exist(transferLog);
+        it('Should emit Transfer log', async function () {
+            const depositReceiver = "0xcfb14dD525b407e6123EE3C88B7aB20963892a66";
+            const depositData = defaultAbiCoder.encode(['uint256'], ["100000000000000000"]);
+            
+            let depositTx = await bicoToInteract.connect(accounts[12]).deposit(depositReceiver, depositData);
+            let receipt = await ethers.provider.getTransactionReceipt(depositTx.hash);
+
+            expect(receipt.logs).to.be.ok;
         });
 
-        it('Should receive withdraw transaction', async() => {
-            withdrawTx = await bicoToInteract.withdraw("5000000000000000000");
-            should.exist(withdrawTx);
+        it('Should receive withdraw transaction', async () => {
+            withdrawTx = await bicoToInteract.withdraw("100000000000000000");
+            let receipt = await ethers.provider.getTransactionReceipt(withdrawTx.hash);
+            expect(receipt).to.be.ok
         });
     
-        it('Should emit Transfer transaction', () => {
-            const logs = logDecoder.decodeLogs(withdrawTx.receipt.rawLogs);
-            transferLog = logs.find(l => l.event === 'Transfer');
-            should.exist(transferLog);
+        it('Should emit Transfer transaction', async () => {
+            withdrawTx = await bicoToInteract.withdraw("100000000000000000");
+            let receipt = await ethers.provider.getTransactionReceipt(withdrawTx.hash);
+            expect(receipt.logs).to.be.ok;
         });
     });
 });
