@@ -5,28 +5,16 @@ pragma solidity 0.8.4;
 
 import "./BicoTokenImplementation.sol";
 
-contract PolygonBicoToken is BicoTokenImplementation {
-    string private _revertMsg;
+contract PolygonBicoToken is Initializable, BicoTokenImplementation {
     bytes32 public constant DEPOSITOR_ROLE = keccak256("DEPOSITOR_ROLE");
-
-    modifier only(bytes32 role) {
-        require(
-            hasRole(role, _msgSender()),
-            _revertMsg
-        );
-        _;
-    }
 
     /**
      * @notice Initialize the contract after it has been proxified
      * @dev meant to be called once immediately after deployment
      */
-    function initialize( address beneficiary, address trustedForwarder, address governor, address accessControlAdmin, address pauser, address minter, address childChainManager )
-        external
-        initializer
-    {
-        _setupRole(DEPOSITOR_ROLE, childChainManager);
+    function polygonBico_init( address beneficiary, address trustedForwarder, address governor, address accessControlAdmin, address pauser, address minter, address childChainManager ) public initializer {
         initialize(beneficiary, trustedForwarder, governor, accessControlAdmin, pauser, minter);
+        _setupRole(DEPOSITOR_ROLE, childChainManager);
     }
 
     /**
@@ -39,8 +27,7 @@ contract PolygonBicoToken is BicoTokenImplementation {
      */
     function deposit(address user, bytes calldata depositData)
         external
-        // override
-        only(DEPOSITOR_ROLE)
+        onlyRole(DEPOSITOR_ROLE)
     {
         uint256 amount = abi.decode(depositData, (uint256));
         _mint(user, amount);
