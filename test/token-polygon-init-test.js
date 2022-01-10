@@ -63,15 +63,15 @@ describe("ERC20 :: BICO ", function () {
             bicoTokenProxy.address
         );
 
-        // await bicoToInteract.polygonBico_init(
-        //     await accounts[0].getAddress(),
-        //     biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
-        //     governor,
-        //     accessControlAdmin,
-        //     pauser,
-        //     minter,
-        //     childChainManager
-        // );
+        await bicoToInteract.polygonBico_init(
+            await accounts[0].getAddress(),
+            biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
+            governor,
+            accessControlAdmin,
+            pauser,
+            minter,
+            childChainManager
+        );
     });
 
     describe("Polygon Token Actions", function () {
@@ -83,21 +83,21 @@ describe("ERC20 :: BICO ", function () {
             should.exist(depositTx);
         });
 
-        // it('Should emit Transfer log', () => {
-        //     const logs = logDecoder.decodeLogs(depositTx.receipt.rawLogs);
-        //     transferLog = logs.find(l => l.event === 'Transfer');
-        //     should.exist(transferLog);
-        // });
+        it('Should emit Transfer log', () => {
+            const logs = logDecoder.decodeLogs(depositTx.receipt.rawLogs);
+            transferLog = logs.find(l => l.event === 'Transfer');
+            should.exist(transferLog);
+        });
 
         it('Should receive withdraw transaction', async() => {
             withdrawTx = await bicoToInteract.withdraw("5000000000000000000");
             should.exist(withdrawTx);
         });
     
-        // it('Should emit Transfer transaction', () => {
-        //     const logs = logDecoder.decodeLogs(withdrawTx.receipt.rawLogs);
-        //     transferLog = logs.find(l => l.event === 'Transfer');
-        //     should.exist(transferLog);
-        // });
+        it('Should emit Transfer transaction', () => {
+            const logs = logDecoder.decodeLogs(withdrawTx.receipt.rawLogs);
+            transferLog = logs.find(l => l.event === 'Transfer');
+            should.exist(transferLog);
+        });
     });
 });
