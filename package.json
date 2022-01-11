@@ -28,6 +28,9 @@
     "@openzeppelin/contracts": "4.3.2",
     "@openzeppelin/contracts-upgradeable": "^4.3.2",
     "axios": "^0.21.1",
+    "bn.js": "^5.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bn": "^0.3.0",
     "eth-sig-util": "^2.5.4"
   }
 }
