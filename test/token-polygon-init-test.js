@@ -28,7 +28,7 @@ describe("ERC20 :: BICO ", function () {
     let childChainManager;
     let depositReceiver;
 
-    before(async function () {
+    beforeEach(async function () {
         accounts = await ethers.getSigners();
         firstHolder = await accounts[0].getAddress();
         depositReceiver = await accounts[1].getAddress();
@@ -61,71 +61,40 @@ describe("ERC20 :: BICO ", function () {
             "contracts/bico-token/bico/PolygonBicoToken.sol:PolygonBicoToken",
             bicoTokenProxy.address
         );
-
-        await bicoToInteract.polygonBico_init(
-            await accounts[0].getAddress(),
-            biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
-            governor,
-            accessControlAdmin,
-            pauser,
-            minter,
-            childChainManager
-        );
     });
 
-    describe("Polygon Token Actions", function () {
-        it("Should be able to mint tokens on deposit", async function () {
-            const depositData = defaultAbiCoder.encode(['uint256'], ["100000000000000000"]);
-            let depositTx = await bicoToInteract.connect(accounts[12]).deposit(depositReceiver, depositData);
-            let receipt = await ethers.provider.getTransactionReceipt(depositTx.hash);
-            receiptLogs = receipt.logs;
+    describe("Initialize contract", function () {
+        it("Should not mint to zero address", async function () {
+            let result = await bicoToInteract.polygonBico_init(
+                            "0x0000000000000000000000000000000000000000",
+                            biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
+                            governor,
+                            accessControlAdmin,
+                            pauser,
+                            minter,
+                            childChainManager
+                        );
+            let totalSupply = await bicoToInteract.totalSupply();
+            console.log(totalSupply);
 
-            expect(receipt).to.be.ok;
+            expect(totalSupply.toString()).to.be.equal("0");
         });
 
-        it('Should emit Transfer log', async function () {
-            const depositData = defaultAbiCoder.encode(['uint256'], ["1000000000000000000"]);
-            
-            let depositTx = await bicoToInteract.connect(accounts[12]).deposit(depositReceiver, depositData);
-            let receipt = await ethers.provider.getTransactionReceipt(depositTx.hash);
+        it("Should be able initialize successfully", async function () {
+            let result = await bicoToInteract.polygonBico_init(
+                            await accounts[0].getAddress(),
+                            biconomyForwarder.address,  // trusted forwarder for the current network. otherwise use default value
+                            governor,
+                            accessControlAdmin,
+                            pauser,
+                            minter,
+                            childChainManager
+                        );
 
-            expect(receipt.logs).to.be.ok;
+            expect(result).to.be.ok;
         });
 
-        it('Should emit correct value', async () => {
-            const depositData = defaultAbiCoder.encode(['uint256'], ["100000000000000000"]);
-            let depositTx = await bicoToInteract.connect(accounts[12]).deposit(depositReceiver, depositData);
-            let receipt = await ethers.provider.getTransactionReceipt(depositTx.hash);
-            expect(receipt.from.toLowerCase()).to.equal(accounts[12].address.toLowerCase());
-            expect(receipt.status).to.equal(1);
-        });
 
-        it('Tx should revert with proper reason', async() => {
-            const depositData = defaultAbiCoder.encode(['uint256'], ["100000000000000000"]);
-
-            await expect(bicoToInteract.connect(accounts[1]).deposit(depositReceiver, depositData)).to.be.reverted;
-        })
-
-        // test cases for withdraw method
-        it('Should receive withdraw transaction', async () => {
-            withdrawTx = await bicoToInteract.connect(accounts[1]).withdraw("100000000000000000");
-            let receipt = await ethers.provider.getTransactionReceipt(withdrawTx.hash);
-            expect(receipt).to.be.ok
-        });
-    
-        it('Should emit Transfer transaction', async () => {
-            withdrawTx = await bicoToInteract.connect(accounts[1]).withdraw("100000000000000000");
-            let receipt = await ethers.provider.getTransactionReceipt(withdrawTx.hash);
-            expect(receipt.logs).to.be.ok;
-        });
-
-        it('Should emit correct value', async () => {
-            withdrawTx = await bicoToInteract.connect(accounts[1]).withdraw("100000000000");
-            let receipt = await ethers.provider.getTransactionReceipt(withdrawTx.hash);
-
-            expect(receipt.logs).to.be.ok;            
-            expect(receipt.from.toLowerCase()).to.equal(accounts[1].address.toLowerCase());
-            expect(receipt.status).to.equal(1);
-        });
+        
     });
 });
