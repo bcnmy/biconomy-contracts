@@ -12,6 +12,13 @@ contract PolygonBicoToken is Initializable, BicoTokenImplementation {
      * @dev meant to be called once immediately after deployment
      */
     function polygonBico_init( address beneficiary, address trustedForwarder, address governor, address accessControlAdmin, address pauser, address minter, address childChainManager ) public initializer {
+        require(trustedForwarder != address(0), "trustedForwarder address cannot be 0");
+        require(governor != address(0), "governor address cannot be 0");
+        require(accessControlAdmin != address(0), "accessControlAdmin address cannot be 0");
+        require(pauser != address(0), "pauser address cannot be 0");
+        require(minter != address(0), "minter address cannot be 0");
+        require(childChainManager != address(0), "childChainManager address cannot be 0");
+
         initialize(beneficiary, trustedForwarder, governor, accessControlAdmin, pauser, minter);
         _setupRole(DEPOSITOR_ROLE, childChainManager);
     }
