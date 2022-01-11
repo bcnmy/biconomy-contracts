@@ -592,6 +592,7 @@ contract BicoTokenImplementation is Initializable, ERC2771ContextUpgradeable, Pa
      * @dev Initializes the contract
      */
     function initialize(address beneficiary, address trustedForwarder, address governor, address accessControlAdmin, address pauser, address minter) public initializer {
+       require(beneficiary != address(0), "Tokens cannot be minted at 0 address");
        __BicoTokenImplementation_init_unchained(accessControlAdmin,pauser,minter);
        _mint(beneficiary, 1000000000 * 10 ** decimals());
        __ERC2771Context_init(trustedForwarder);

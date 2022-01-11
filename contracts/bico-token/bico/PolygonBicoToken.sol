@@ -1,4 +1,3 @@
-// File: contracts/child/ChildToken/UpgradeableChildERC20/UChildERC20.sol
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.4;
