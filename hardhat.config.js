@@ -140,7 +140,7 @@ module.exports = {
     goerli:{
       url:`https://eth-goerli.alchemyapi.io/v2/${alchemyKey}`,
       accounts:walletUtils.makeKeyList(),
-      chainId:42
+      chainId:5
     },
     rinkeby:{
       //url:`https://kovan.infura.io/v3/${infuraKey}`,
@@ -149,9 +149,9 @@ module.exports = {
       chainId:4,
     },
     mumbai:{
-      url:`https://polygon-mumbai.g.alchemy.com/v2/${alchemyKey}`,
+      url:`https://polygon-mumbai.g.alchemy.com/v2/7JwWhWSG1vtw6ggm_o_GcYnyNw02oM8b`,
       accounts:walletUtils.makeKeyList(),
-      chainId:4,
+      chainId:80001,
       gasPrice: 5000000000
     },
     polygon:{
